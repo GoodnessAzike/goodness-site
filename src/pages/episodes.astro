@@ -45,6 +45,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
       <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
     </div>
   )}
+  <button type="button" class="all-toggle" data-all hidden>Expand all</button>
 
   {seasons.map((season) => (
     <section class="season-block" aria-labelledby={`season-${season.n}`} data-season={season.n}>
@@ -62,13 +63,20 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
           <li class:list={['entry', { newest: ep.id === newestId }]}>
             <div class="marker" aria-hidden="true"></div>
             <article>
-              <p class="code">Season {ep.data.season}, Episode {ep.data.episode}</p>
-              <h3>{ep.data.title}</h3>
-              {ep.data.subtitle && <p class="subtitle">{ep.data.subtitle}</p>}
-              <p class="meta">
-                <time datetime={ep.data.date.toISOString().slice(0, 10)}>{fmt.format(ep.data.date)}</time>
-                {ep.data.sample && <span class="sample-tag">Sample, replace me</span>}
-              </p>
+              <details class="ep" open={ep.id === newestId} data-ep>
+              <summary>
+                <span class="sum-text">
+                  <span class="code">Season {ep.data.season}, Episode {ep.data.episode}</span>
+                  <h3>{ep.data.title}</h3>
+                  {ep.data.subtitle && <span class="subtitle">{ep.data.subtitle}</span>}
+                  <span class="meta">
+                    <time datetime={ep.data.date.toISOString().slice(0, 10)}>{fmt.format(ep.data.date)}</time>
+                    {ep.data.sample && <span class="sample-tag">Sample, replace me</span>}
+                  </span>
+                </span>
+                <svg class="ep-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+              </summary>
+              <div class="ep-body">
               <div class="notes"><Content /></div>
               <p class="cliff hand"><span class="cliff-label">Next time:</span> {ep.data.cliffhanger}</p>
               <div class="actions">
@@ -88,6 +96,8 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
                   ? <a class="button" href={ep.data.medium} target="_blank" rel="noopener">Read this episode on Medium</a>
                   : <span class="ph">Placeholder: Medium link</span>}
               </div>
+              </div>
+              </details>
             </article>
           </li>
         ))}
@@ -126,6 +136,28 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
         history.replaceState(null, '', `#season-${pick.value}`);
       }),
     );
+  }
+
+  // Expand all / collapse all, for the season on screen
+  const allBtn = document.querySelector<HTMLButtonElement>('[data-all]');
+  if (allBtn) {
+    const visibleEps = () => Array.from(document.querySelectorAll<HTMLDetailsElement>('[data-season]:not([hidden]) [data-ep]'));
+    const sync = () => {
+      const eps = visibleEps();
+      allBtn.hidden = eps.length < 2;
+      allBtn.textContent = eps.length && eps.every((d) => d.open) ? 'Collapse all' : 'Expand all';
+    };
+    allBtn.addEventListener('click', () => {
+      const eps = visibleEps();
+      const open = !eps.every((d) => d.open);
+      eps.forEach((d) => { d.open = open; });
+      sync();
+    });
+    document.querySelectorAll<HTMLDetailsElement>('[data-ep]').forEach((d) => d.addEventListener('toggle', sync));
+    document.querySelector('[data-season-pick]')?.addEventListener('change', () => setTimeout(sync));
+    window.addEventListener('hashchange', () => setTimeout(sync));
+    document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', () => setTimeout(sync)));
+    sync();
   }
 
   import { unlockAudio } from '../scripts/unlock-audio';
@@ -188,9 +220,38 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
   .season-block + .season-block { margin-top: clamp(24px, 4vw, 40px); }
   .season-block[hidden] { display: none; }
 
+  /* each episode opens and closes */
+  .ep { width: 100%; }
+  .ep summary {
+    list-style: none; cursor: pointer;
+    display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: start;
+  }
+  .ep summary::-webkit-details-marker { display: none; }
+  .sum-text { display: grid; gap: 10px; justify-items: start; }
+  .sum-text .code, .sum-text .subtitle, .sum-text .meta { display: block; }
+  .sum-text .meta { display: flex; }
+  .ep summary:hover h3 { text-decoration: underline; text-decoration-color: var(--line); text-decoration-thickness: 3px; text-underline-offset: 0.12em; }
+  .ep-chev {
+    width: 34px; height: 34px; margin-top: 26px; padding: 4px;
+    border: 1.5px solid var(--line); fill: none; stroke: var(--signal); stroke-width: 2.5;
+    transition: transform 0.25s ease;
+  }
+  .ep[open] .ep-chev { transform: rotate(180deg); }
+  .ep summary:focus-visible { outline: 3px solid var(--signal); outline-offset: 6px; }
+  .ep-body { display: grid; gap: 12px; justify-items: start; padding-top: 14px; }
+  .ep:not([open]) + * { margin-top: 0; }
+
+  .all-toggle {
+    margin: 0 0 28px; min-height: 52px; padding: 6px 16px; vertical-align: top;
+    border: 1.5px solid var(--line); background: transparent; color: var(--muted);
+    font: inherit; font-size: 0.9375rem; font-weight: 700; cursor: pointer;
+  }
+  .all-toggle:hover { color: var(--paper); border-color: var(--paper); }
+  .all-toggle[hidden] { display: none; }
+
   /* Netflix-style season dropdown */
-  .picker { position: relative; display: inline-block; margin-bottom: 32px; max-width: 100%; }
-  @media (max-width: 560px) { .picker { display: block; } .picker select { width: 100%; font-size: 1.1875rem; } }
+  .picker { position: relative; display: inline-block; margin: 0 14px 32px 0; max-width: 100%; vertical-align: top; }
+  @media (max-width: 560px) { .picker { display: block; margin: 0 0 12px; } .picker select { width: 100%; font-size: 1.1875rem; } .all-toggle { min-height: 44px; } }
   .picker select {
     appearance: none; -webkit-appearance: none;
     max-width: 100%;
@@ -227,7 +288,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
     display: grid;
     grid-template-columns: 28px 1fr;
     gap: 0 clamp(14px, 3vw, 28px);
-    padding-bottom: clamp(40px, 6vw, 64px);
+    padding-bottom: clamp(28px, 4vw, 40px);
   }
   /* timeline rail */
   .entry::before {
