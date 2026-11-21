@@ -2,6 +2,8 @@
 // a metallic tick each second with echo, and a deep swelling boom on each new minute.
 // Made live with Web Audio. No audio files. Only starts after the visitor turns it on.
 
+import { unlockAudio, releaseAudio } from './unlock-audio';
+
 type Ctx = AudioContext;
 
 export function createCountdownSound() {
@@ -88,12 +90,14 @@ export function createCountdownSound() {
   return {
     get on() { return stopDrone !== null; },
     start() {
+      unlockAudio();
       ac ??= new (window.AudioContext || (window as any).webkitAudioContext)();
       ac.resume();
       if (!stopDrone) stopDrone = drone(ac);
     },
     stop() {
       if (stopDrone) { stopDrone(); stopDrone = null; }
+      releaseAudio();
     },
     tick() {
       if (!ac || !stopDrone) return;

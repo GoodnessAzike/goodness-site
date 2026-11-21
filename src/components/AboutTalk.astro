@@ -41,6 +41,7 @@ const ready = Boolean(audio) && slides.length > 0;
 </section>
 
 <script>
+  import { unlockAudio } from '../scripts/unlock-audio';
   const root = document.querySelector<HTMLElement>('[data-talk]');
   if (root) {
     const audio = root.querySelector<HTMLAudioElement>('[data-audio]')!;
@@ -63,7 +64,7 @@ const ready = Boolean(audio) && slides.length > 0;
       big.setAttribute('aria-label', playing ? 'Pause' : 'Play');
     };
 
-    const flip = () => (audio.paused ? audio.play() : audio.pause());
+    const flip = () => { unlockAudio(); return audio.paused ? audio.play() : audio.pause(); };
     toggle.addEventListener('click', flip);
     big.addEventListener('click', flip);
     audio.addEventListener('play', sync);

@@ -54,4 +54,15 @@ const path = Astro.url.pathname.replace(/\/?$/, '/');
   }
   nav a:hover { color: var(--paper); }
   nav a[aria-current='page'] { color: var(--paper); border-bottom-color: var(--signal); }
+
+  /* Phones: all five links on one row */
+  @media (max-width: 560px) {
+    .bar { gap: 4px 0; }
+    nav { width: 100%; }
+    ul { flex-wrap: nowrap; justify-content: space-between; gap: 0 6px; }
+    nav a { font-size: 0.875rem; white-space: nowrap; }
+  }
+  @media (max-width: 340px) {
+    ul { flex-wrap: wrap; justify-content: flex-start; gap: 0 14px; }
+  }
 </style>

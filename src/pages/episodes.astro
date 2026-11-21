@@ -68,6 +68,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
 </Base>
 
 <script>
+  import { unlockAudio } from '../scripts/unlock-audio';
   // Listen: plays the episode's own recording if it has one, otherwise reads it aloud
   // with the browser's built-in voice. Only one episode plays at a time.
   const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
@@ -93,6 +94,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
     btn.hidden = false;
 
     btn.addEventListener('click', () => {
+      unlockAudio();
       const wasMe = current?.btn === btn;
       current?.stop();
       if (wasMe) return;
