@@ -21,7 +21,7 @@ export const themeSongs: Stage[] = [
     songs: [
       { artist: 'Dido', song: 'Life for Rent', url: 'https://open.spotify.com/track/7nYS7mmZh0K8EbM8DBRwb9', note: '' }, // TODO: one-line note
       { artist: 'Dido', song: 'White Flag', url: 'https://open.spotify.com/track/6si71supnBUhddjR2FJc2L', note: '' }, // TODO: one-line note
-      { artist: 'Dido', song: 'Thank You', url: '', note: '' }, // TODO: link + one-line note
+      { artist: 'Dido', song: 'Thank You', url: 'https://open.spotify.com/track/3yUcJwYu7fXAfqMj9krY6l', note: '' }, // TODO: one-line note
     ],
   },
 ];
