@@ -1,0 +1,254 @@
+---
+// A white board that pops up and a hand that draws the episode's flowchart.
+// The drawing comes from the `drawing` field in an episode's Markdown file.
+import rough from 'roughjs';
+
+interface Step { label: string; note?: string }
+interface Props { title: string; steps: Step[] }
+const { title, steps } = Astro.props;
+
+const W = 600;
+const BOX_X = 36;
+const BOX_W = 330;
+const MID = BOX_X + BOX_W / 2;
+const NOTE_X = BOX_X + BOX_W + 34;
+const LINE = 30;
+const GAP = 62;
+
+// Wrap text into lines of roughly `max` characters
+function wrap(text: string, max: number) {
+  const lines: string[] = [];
+  let line = '';
+  for (const word of text.split(/\s+/)) {
+    if (line && (line + ' ' + word).length > max) { lines.push(line); line = word; }
+    else line = line ? line + ' ' + word : word;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+const gen = rough.generator();
+const opts = (seed: number, extra = {}) => ({ seed, roughness: 1.1, bowing: 1.2, strokeWidth: 2.2, stroke: '#1e1e1e', ...extra });
+const toPaths = (d: ReturnType<typeof gen.line>) => gen.toPaths(d).map((p) => p.d);
+
+type Item =
+  | { kind: 'stroke'; d: string; red?: boolean }
+  | { kind: 'write'; lines: string[]; x: number; y: number; anchor: 'start' | 'middle'; size: number; red?: boolean; rotate?: number };
+
+const items: Item[] = [];
+let y = 34;
+
+// Title, written first, with a scribbled underline
+const titleLines = wrap(title, 34);
+items.push({ kind: 'write', lines: titleLines, x: BOX_X, y: y + 30, anchor: 'start', size: 32 });
+y += titleLines.length * 38 + 14;
+toPaths(gen.line(BOX_X, y, BOX_X + Math.min(520, titleLines[0].length * 15), y + 3, opts(7, { stroke: '#e03131' }))).forEach((d) => items.push({ kind: 'stroke', d, red: true }));
+y += 44;
+
+steps.forEach((step, i) => {
+  const lines = wrap(step.label, 23);
+  const h = lines.length * LINE + 34;
+
+  toPaths(gen.rectangle(BOX_X, y, BOX_W, h, opts(11 + i))).forEach((d) => items.push({ kind: 'stroke', d }));
+  items.push({ kind: 'write', lines, x: MID, y: y + 17 + LINE * 0.8, anchor: 'middle', size: 24 });
+
+  if (step.note) {
+    const noteLines = wrap(step.note, 14);
+    const noteY = y + h / 2 - ((noteLines.length - 1) * 26) / 2 + 8;
+    toPaths(gen.linearPath([[NOTE_X - 6, noteY - 6], [BOX_X + BOX_W + 8, y + h / 2]], opts(31 + i, { stroke: '#e03131', strokeWidth: 1.8 }))).forEach((d) => items.push({ kind: 'stroke', d, red: true }));
+    items.push({ kind: 'write', lines: noteLines, x: NOTE_X, y: noteY, anchor: 'start', size: 21, red: true, rotate: -3 });
+  }
+
+  y += h;
+  if (i < steps.length - 1) {
+    toPaths(gen.line(MID, y + 8, MID + 2, y + GAP - 8, opts(51 + i))).forEach((d) => items.push({ kind: 'stroke', d }));
+    toPaths(gen.linearPath([[MID - 10, y + GAP - 22], [MID + 2, y + GAP - 8], [MID + 13, y + GAP - 23]], opts(71 + i))).forEach((d) => items.push({ kind: 'stroke', d }));
+    y += GAP;
+  }
+});
+
+const H = y + 40;
+const a11y = `${title}. ` + steps.map((s, i) => `Step ${i + 1}: ${s.label}${s.note ? ` (${s.note})` : ''}.`).join(' ');
+---
+<figure class="board-wrap">
+  <div class="board" data-board style={`--ratio: ${W / H}`}>
+    <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={a11y}>
+      <defs>
+        {items.map((it, i) => it.kind === 'write' && (
+          <clipPath id={`wb-clip-${i}`}><rect class="wb-reveal" x="0" y="0" width={W} height={H} /></clipPath>
+        ))}
+      </defs>
+      {items.map((it, i) => it.kind === 'stroke'
+        ? <path class:list={['wb-stroke', { red: it.red }]} d={it.d} />
+        : (
+          <g clip-path={`url(#wb-clip-${i})`}>
+            <text
+              class:list={['wb-text', { red: it.red }]}
+              x={it.x} y={it.y}
+              text-anchor={it.anchor}
+              font-size={it.size}
+              transform={it.rotate ? `rotate(${it.rotate} ${it.x} ${it.y})` : undefined}
+            >
+              {it.lines.map((l, j) => <tspan x={it.x} dy={j === 0 ? 0 : it.size * 1.22}>{l}</tspan>)}
+            </text>
+          </g>
+        ))}
+
+      <!-- the drawing hand: line-art hand holding a marker, pen tip at 0,0 -->
+      <g class="hand" data-hand aria-hidden="true" style="opacity:0">
+        <g transform="rotate(-28) scale(1.45)">
+          <path d="M-5 -16 L5 -16 L1.6 -2 L-1.6 -2 Z" fill="#1e1e1e" />
+          <rect x="-7.5" y="-118" width="15" height="103" rx="3" fill="#1e1e1e" />
+          <rect x="-7.5" y="-118" width="15" height="22" rx="3" fill="#e03131" />
+          <path d="M-9 -40 C -21 -56, -16 -86, 0 -92 C 22 -100, 58 -96, 73 -70 C 88 -44, 72 -18, 46 -17 C 26 -16, 6 -24, -9 -40 Z" fill="#fff" stroke="#1e1e1e" stroke-width="2.6" stroke-linejoin="round" />
+          <path d="M-4 -52 C 10 -49, 22 -52, 33 -59 M-2 -65 C 12 -62, 26 -66, 37 -73 M2 -78 C 15 -76, 27 -79, 38 -85" fill="none" stroke="#1e1e1e" stroke-width="2.2" stroke-linecap="round" />
+          <path d="M-12 -74 C -28 -68, -24 -50, -7 -47" fill="#fff" stroke="#1e1e1e" stroke-width="2.6" stroke-linecap="round" />
+          <path d="M46 -17 L 96 52 M73 -70 L 140 -8" fill="none" stroke="#1e1e1e" stroke-width="2.6" stroke-linecap="round" />
+        </g>
+      </g>
+    </svg>
+  </div>
+  <div class="controls">
+    <button type="button" class="ctl" data-replay>Replay drawing</button>
+    <button type="button" class="ctl" data-skip>Skip to the end</button>
+  </div>
+</figure>
+
+<script>
+  const SPEED = 1500;   // path units per second
+  const WRITE = 22;     // characters per second
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
+
+  document.querySelectorAll<HTMLElement>('.board-wrap').forEach((wrap) => {
+    const board = wrap.querySelector<HTMLElement>('[data-board]')!;
+    const svg = board.querySelector('svg')!;
+    const hand = svg.querySelector<SVGGElement>('[data-hand]')!;
+    const parts = Array.from(svg.querySelectorAll<SVGElement>('.wb-stroke, .wb-text'));
+    let run = 0; // bumps on every replay/skip so old runs stop
+
+    const handAt = (x: number, y: number) => hand.setAttribute('transform', `translate(${x} ${y})`);
+
+    const reset = () => {
+      parts.forEach((el) => {
+        if (el instanceof SVGPathElement) {
+          const len = el.getTotalLength();
+          el.style.strokeDasharray = `${len}`;
+          el.style.strokeDashoffset = `${len}`;
+        } else {
+          const rect = el.closest('g')!.getAttribute('clip-path')!.match(/#([^)]+)/)![1];
+          svg.querySelector<SVGRectElement>(`#${rect} rect`)!.setAttribute('width', '0');
+        }
+      });
+    };
+
+    const finish = () => {
+      run++;
+      parts.forEach((el) => {
+        if (el instanceof SVGPathElement) el.style.strokeDashoffset = '0';
+        else {
+          const rect = el.closest('g')!.getAttribute('clip-path')!.match(/#([^)]+)/)![1];
+          svg.querySelector<SVGRectElement>(`#${rect} rect`)!.setAttribute('width', '10000');
+        }
+      });
+      hand.style.opacity = '0';
+    };
+
+    const play = async () => {
+      const me = ++run;
+      reset();
+      board.classList.remove('pop');
+      void board.offsetWidth;
+      board.classList.add('pop');
+      await sleep(650);
+      hand.style.opacity = '1';
+
+      for (const el of parts) {
+        if (me !== run) return;
+        if (el instanceof SVGPathElement) {
+          const len = el.getTotalLength();
+          const dur = Math.max(180, (len / SPEED) * 1000);
+          const start = await frame();
+          let now = start;
+          while (now - start < dur) {
+            if (me !== run) return;
+            const done = len * ((now - start) / dur);
+            el.style.strokeDashoffset = `${len - done}`;
+            const p = el.getPointAtLength(done);
+            handAt(p.x, p.y);
+            now = await frame();
+          }
+          el.style.strokeDashoffset = '0';
+        } else {
+          const box = (el as SVGTextElement).getBBox();
+          const id = el.closest('g')!.getAttribute('clip-path')!.match(/#([^)]+)/)![1];
+          const rect = svg.querySelector<SVGRectElement>(`#${id} rect`)!;
+          const chars = (el.textContent || '').length;
+          const dur = Math.max(300, (chars / WRITE) * 1000);
+          const start = await frame();
+          let now = start;
+          while (now - start < dur) {
+            if (me !== run) return;
+            const t = (now - start) / dur;
+            rect.setAttribute('width', `${box.x + box.width * t}`);
+            handAt(box.x + box.width * t, box.y + box.height * 0.75 + Math.sin(now / 45) * 4);
+            now = await frame();
+          }
+          rect.setAttribute('width', '10000');
+        }
+      }
+      if (me !== run) return;
+      await sleep(400);
+      hand.style.opacity = '0';
+    };
+
+    wrap.querySelector('[data-replay]')!.addEventListener('click', () => { if (!reduce) play(); });
+    wrap.querySelector('[data-skip]')!.addEventListener('click', finish);
+
+    if (reduce) { board.classList.add('shown'); finish(); return; }
+    document.fonts.ready.then(play);
+  });
+</script>
+
+<style>
+  .board-wrap { margin: 0; display: grid; gap: 12px; justify-items: center; }
+  .board {
+    width: 100%;
+    /* keep the whole board on screen: width follows the drawing's shape */
+    max-width: min(540px, calc(84vh * var(--ratio)));
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 0 0 1px rgba(220, 230, 240, 0.25), 0 24px 60px rgba(0, 0, 0, 0.45);
+    padding: 8px;
+    overflow: hidden;
+  }
+  /* the pop when the board opens */
+  .board.pop { animation: pop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+  @keyframes pop {
+    from { transform: scale(0.82) translateY(24px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+  svg { display: block; width: 100%; height: auto; }
+
+  .wb-stroke { fill: none; stroke: #1e1e1e; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .wb-stroke.red { stroke: #e03131; }
+  .wb-text { font-family: var(--font-hand); fill: #1e1e1e; }
+  .wb-text.red { fill: #e03131; font-weight: 700; }
+  .hand { pointer-events: none; transition: opacity 0.3s; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .ctl {
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--paper);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .ctl:hover { border-color: var(--paper); }
+</style>

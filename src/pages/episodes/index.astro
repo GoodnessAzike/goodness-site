@@ -1,6 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
-import Base from '../layouts/Base.astro';
+import Base from '../../layouts/Base.astro';
 
 const episodes = (await getCollection('episodes')).sort(
   (a, b) => b.data.season - a.data.season || b.data.episode - a.data.episode,
@@ -22,16 +22,19 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
         <div class="marker" aria-hidden="true"></div>
         <article>
           <p class="code">Season {ep.data.season}, Episode {ep.data.episode}</p>
-          <h2>{ep.data.title}</h2>
+          <h2><a class="ep-link" href={`/episodes/${ep.id}/`}>{ep.data.title}</a></h2>
           <p class="meta">
             <time datetime={ep.data.date.toISOString().slice(0, 10)}>{fmt.format(ep.data.date)}</time>
             {ep.data.sample && <span class="sample-tag">Sample, replace me</span>}
           </p>
           <div class="notes"><Content /></div>
           <p class="cliff hand"><span class="cliff-label">Next time:</span> {ep.data.cliffhanger}</p>
-          {ep.data.medium
-            ? <a class="button" href={ep.data.medium} target="_blank" rel="noopener">Read this episode on Medium</a>
-            : <span class="ph">Placeholder: Medium link</span>}
+          <div class="actions">
+            {ep.data.drawing && <a class="button" href={`/episodes/${ep.id}/`}>Watch the drawing</a>}
+            {ep.data.medium
+              ? <a class="button" href={ep.data.medium} target="_blank" rel="noopener">Read this episode on Medium</a>
+              : <span class="ph">Placeholder: Medium link</span>}
+          </div>
         </article>
       </li>
     ))}
@@ -64,6 +67,9 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
   .code { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; color: var(--muted); line-height: 1.2; }
   .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; color: var(--muted); font-size: 1rem; }
   .notes { max-width: var(--measure); }
+  .ep-link { text-decoration: none; }
+  .ep-link:hover { text-decoration: underline; text-decoration-color: var(--line); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .notes :global(p + p) { margin-top: 0.8em; }
   .cliff {
     border-left: 3px solid var(--redline);

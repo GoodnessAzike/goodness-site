@@ -38,6 +38,23 @@ Copy a file in `src/content/episodes/`, e.g. `s01e03.md`. Update `season`, `epis
 `cliffhanger`, and `medium` (your Medium post link). Write your notes below the second `---` line.
 The newest episode shows first, and the Home page clock shows the next episode number.
 
+### Add a whiteboard drawing to an Episode
+
+Add a `drawing` block to the episode file. Each step becomes a hand-drawn box, in order, and `note` is an
+optional red side note. Keep labels short (under about 45 characters) and use 4 to 7 steps.
+
+```yaml
+drawing:
+  title: "Bring a file back after a delete"
+  steps:
+    - label: "22:00 the Lambda writes the file"
+      note: "version 1"
+    - label: "22:40 the rerun writes the same key"
+      note: "version 2 on top"
+```
+
+The episode page opens with the board popping up and a hand drawing it. See `src/content/episodes/s01e05.md`.
+
 ### Add a Project
 
 Copy a file in `src/content/projects/`. Update `title`, `summary`, `stack`, and `github`.
