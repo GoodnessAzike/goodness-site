@@ -15,10 +15,15 @@ export const site = {
     'The thread through all of it: the best systems, pipelines or classrooms, are designed for the people who were never meant to fit the default mold.',
   ],
   // About page "Outside work" section. One line each.
+  // A line can also be { text: '...', link: 'https://...', linkText: '...' } to add a link under it.
   outsideWork: [
     'Wrote DO IT MATHEMATICS, a maths book for children aged 7 to 10.',
     'London Chapter Lead for Teens in AI, where I have run hackathons and mentored young technologists.',
-    'Active in Women in Data.',
+    {
+      text: 'Active in Women in Data.',
+      link: 'https://www.linkedin.com/posts/shubhangi-goyal-0ab69795_london-women-tech-ugcPost-7526374173137436673-63Ou/',
+      linkText: 'Women Shaping Tech, London',
+    },
     'Presented at the BCSWomen Lovelace Colloquium on non-linear learning journeys in computing.',
   ],
   // Shown under the Outside work list

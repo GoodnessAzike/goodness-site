@@ -52,7 +52,9 @@ const stages = themeSongs
     <section class="outside" aria-labelledby="outside-title">
       <h2 id="outside-title">Outside work</h2>
       <ul>
-        {site.outsideWork.map((item) => <li>{item}</li>)}
+        {site.outsideWork.map((item) => typeof item === 'string'
+          ? <li>{item}</li>
+          : <li>{item.text}{item.link && <a class="note-link" href={item.link} target="_blank" rel="noopener">{item.linkText ?? 'See more'}</a>}</li>)}
       </ul>
       {site.aim && <p class="aim">{site.aim}</p>}
     </section>
@@ -147,6 +149,12 @@ const stages = themeSongs
   .outside li:nth-child(2) { transform: rotate(1.2deg); background: #ffe3e0; }
   .outside li:nth-child(3) { transform: rotate(-0.6deg); background: #e3f1ff; }
   .outside li:nth-child(4) { transform: rotate(1.8deg); background: #e6f4d7; }
+  .note-link {
+    display: block; margin-top: 10px;
+    color: #1f2328; font-family: var(--font-hand); font-weight: 700; font-size: 1.0625rem;
+    text-decoration-color: #e03131; text-decoration-thickness: 2px;
+  }
+  .note-link:hover { color: #e03131; }
   .outside li::before {
     content: ''; position: absolute; top: -10px; left: 50%;
     width: 70px; height: 20px; margin-left: -35px;
