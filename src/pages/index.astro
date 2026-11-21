@@ -1,0 +1,60 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Countdown from '../components/Countdown.astro';
+import MissionCard from '../components/MissionCard.astro';
+import Placeholder from '../components/Placeholder.astro';
+import { site } from '../data/site';
+
+const featured = (await getCollection('missions', ({ data }) => data.featured))
+  .sort((a, b) => a.data.order - b.data.order)
+  .slice(0, 3);
+
+const episodes = (await getCollection('episodes')).sort(
+  (a, b) => b.data.season - a.data.season || b.data.episode - a.data.episode,
+);
+const latest = episodes[0];
+const nextLabel = latest
+  ? `Season ${latest.data.season}, Episode ${latest.data.episode + 1}`
+  : 'Season 1, Episode 1';
+---
+<Base>
+  <section class="hero">
+    <h1>{site.tagline.split(/(?<=,)\s+/).map((part) => <span>{part}</span>)}</h1>
+    <div class="intro">
+      {site.intro.map((line, i) =>
+        line ? <p>{line}</p> : <p><Placeholder>intro line {i + 1}</Placeholder></p>,
+      )}
+    </div>
+  </section>
+
+  <Countdown nextLabel={nextLabel} />
+
+  <section class="featured" aria-labelledby="featured-title">
+    <div class="featured-head">
+      <h2 id="featured-title">Featured Mission Files</h2>
+      <a href="/mission-files/">See all Mission Files</a>
+    </div>
+    <div class="grid">
+      {featured.map((file) => <MissionCard file={file} />)}
+    </div>
+    {featured.length === 0 && (
+      <p class="empty">Mark up to three Mission Files with <code>featured: true</code> to show them here.</p>
+    )}
+  </section>
+</Base>
+
+<style>
+  .hero { display: grid; gap: clamp(20px, 3vw, 32px); margin-bottom: clamp(40px, 7vw, 72px); }
+  .hero h1 { text-wrap: wrap; }
+  .hero h1 span { display: block; }
+  .intro { display: grid; gap: 8px; font-size: clamp(1.125rem, 2vw, 1.3125rem); }
+
+  .featured { margin-top: clamp(56px, 9vw, 96px); }
+  .featured-head {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+    gap: 8px 24px; margin-bottom: 24px;
+  }
+  .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+  .empty { color: var(--muted); }
+</style>

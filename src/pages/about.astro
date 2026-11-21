@@ -1,0 +1,106 @@
+---
+import Base from '../layouts/Base.astro';
+import Placeholder from '../components/Placeholder.astro';
+import { site } from '../data/site';
+import { themeSongs } from '../data/songs';
+---
+<Base title="About" description={`About ${site.name}, plus contact links and CV.`}>
+  <header class="page-head">
+    <h1>About</h1>
+  </header>
+
+  <div class="about">
+    <section class="bio" aria-label="Bio">
+      {site.bio.map((para) => para ? <p>{para}</p> : <Placeholder block>short bio, two or three sentences</Placeholder>)}
+    </section>
+
+    <section class="contact" aria-labelledby="contact-title">
+      <h2 id="contact-title">Get in touch</h2>
+      <ul>
+        <li>
+          {site.linkedin
+            ? <a href={site.linkedin} target="_blank" rel="noopener">LinkedIn</a>
+            : <Placeholder>LinkedIn link</Placeholder>}
+        </li>
+        <li>
+          {site.email
+            ? <a href={`mailto:${site.email}`}>{site.email}</a>
+            : <Placeholder>email address</Placeholder>}
+        </li>
+      </ul>
+      <a class="button cv" href={site.cv} download>Download my CV (PDF)</a>
+    </section>
+  </div>
+
+  <section class="songs" aria-labelledby="songs-title">
+    <div class="songs-head">
+      <h2 id="songs-title">Theme Songs</h2>
+      <p>The soundtrack so far, by life stage. Links open on Spotify or YouTube.</p>
+    </div>
+
+    <ol class="stages">
+      {themeSongs.map((stage) => (
+        <li class="stage">
+          <h3>{stage.stage}</h3>
+          <ul class="tracks">
+            {stage.songs.map((t) => (
+              <li class="track">
+                <div class="track-name">
+                  {t.song && t.url
+                    ? <a class="song-title" href={t.url} target="_blank" rel="noopener">{t.song}</a>
+                    : t.song
+                      ? <span class="song-title">{t.song}</span>
+                      : <Placeholder>song to be chosen</Placeholder>}
+                  <span class="artist">{t.artist}</span>
+                </div>
+                {t.note
+                  ? <p class="note">{t.note}</p>
+                  : <p class="note"><Placeholder>one-line note</Placeholder></p>}
+                {!t.url && <p class="note"><Placeholder>Spotify or YouTube link</Placeholder></p>}
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ol>
+  </section>
+</Base>
+
+<style>
+  .about {
+    display: grid;
+    gap: 40px;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  @media (max-width: 760px) { .about { grid-template-columns: 1fr; } }
+  .bio { display: grid; gap: 16px; font-size: 1.1875rem; }
+
+  .contact { border: 1px solid var(--line); background: var(--ink-raised); padding: 24px; display: grid; gap: 16px; justify-items: start; }
+  .contact h2 { font-size: 1.75rem; font-weight: 700; }
+  .contact ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .contact a:not(.button) { overflow-wrap: anywhere; }
+
+  .songs { margin-top: clamp(64px, 10vw, 112px); }
+  .songs-head { display: grid; gap: 12px; margin-bottom: 32px; }
+  .songs-head p { color: var(--muted); }
+
+  .stages { list-style: none; margin: 0; padding: 0; display: grid; }
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(150px, 220px) 1fr;
+    gap: 12px 32px;
+    padding-block: 24px;
+    border-top: 1px solid var(--line);
+  }
+  .stage:last-child { border-bottom: 1px solid var(--line); }
+  @media (max-width: 640px) { .stage { grid-template-columns: 1fr; } }
+  .stage h3 { color: var(--muted); }
+
+  .tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+  .track { display: grid; gap: 6px; }
+  .track-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+  .song-title { font-family: var(--font-display); font-weight: 700; font-size: 1.625rem; line-height: 1.1; }
+  .artist { color: var(--muted); }
+  .note { font-size: 1rem; }
+</style>

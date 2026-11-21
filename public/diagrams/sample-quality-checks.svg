@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <pattern id="g" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#4c7bab" stroke-opacity=".18"/></pattern>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dce6f0"/></marker>
+  </defs>
+  <rect width="800" height="560" fill="#0e2440"/>
+  <rect width="800" height="560" fill="url(#g)"/>
+  <rect x="16" y="16" width="768" height="528" fill="none" stroke="#dce6f0" stroke-opacity=".5"/>
+  <g fill="none" stroke="#dce6f0" stroke-width="2">
+    <rect x="60" y="200" width="140" height="90"/>
+    <path d="M380 165L470 245L380 325L290 245z"/>
+    <rect x="580" y="200" width="150" height="90"/>
+    <rect x="310" y="400" width="140" height="70" stroke-dasharray="6 5"/>
+    <path d="M200 245H286M470 245H576" marker-end="url(#ar)"/>
+    <path d="M380 325V396" marker-end="url(#ar)"/>
+  </g>
+  <g fill="#dce6f0" font-size="20" text-anchor="middle">
+    <text x="130" y="252">Ingest</text>
+    <text x="380" y="243">Check</text>
+    <text x="380" y="266" font-size="15" fill="#93a9c2">rules pass?</text>
+    <text x="655" y="252">Store</text>
+    <text x="380" y="442">Quarantine</text>
+  </g>
+  <g fill="#93a9c2" font-size="16">
+    <text x="500" y="230">yes</text>
+    <text x="392" y="368">no</text>
+  </g>
+  <text x="40" y="70" fill="#dce6f0" font-size="26" font-weight="700">Where quality checks sit</text>
+  <text x="40" y="510" fill="#93a9c2" font-size="15" font-style="italic">Sample diagram. Replace with your own.</text>
+</svg>

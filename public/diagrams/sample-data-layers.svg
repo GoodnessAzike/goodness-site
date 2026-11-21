@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <pattern id="g" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#4c7bab" stroke-opacity=".18"/></pattern>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#dce6f0"/></marker>
+  </defs>
+  <rect width="800" height="560" fill="#0e2440"/>
+  <rect width="800" height="560" fill="url(#g)"/>
+  <rect x="16" y="16" width="768" height="528" fill="none" stroke="#dce6f0" stroke-opacity=".5"/>
+  <g fill="none" stroke="#dce6f0" stroke-width="2">
+    <path d="M150 400L400 460L650 400L400 340z"/>
+    <path d="M150 300L400 360L650 300L400 240z"/>
+    <path d="M150 200L400 260L650 200L400 140z"/>
+  </g>
+  <g fill="none" stroke="#93a9c2" stroke-width="1.5">
+    <path d="M690 400V212" marker-end="url(#ar)"/>
+  </g>
+  <g fill="#dce6f0" font-size="20" text-anchor="middle">
+    <text x="400" y="407">Raw</text>
+    <text x="400" y="307">Clean</text>
+    <text x="400" y="207">Ready</text>
+  </g>
+  <g fill="#93a9c2" font-size="15">
+    <text x="704" y="300">each step</text>
+    <text x="704" y="320">adds trust</text>
+  </g>
+  <text x="40" y="70" fill="#dce6f0" font-size="26" font-weight="700">Raw, clean, ready</text>
+  <text x="40" y="510" fill="#93a9c2" font-size="15" font-style="italic">Sample diagram. Replace with your own.</text>
+</svg>

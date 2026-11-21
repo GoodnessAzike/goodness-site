@@ -1,0 +1,46 @@
+---
+// A Mission File drawn like an engineering sheet: the diagram, then a title block.
+import type { CollectionEntry } from 'astro:content';
+interface Props { file: CollectionEntry<'missions'>; headingLevel?: 'h2' | 'h3' }
+const { file, headingLevel = 'h3' } = Astro.props;
+const { title, image, alt, whatThisShows, sample } = file.data;
+const Heading = headingLevel;
+---
+<article class="sheet">
+  <div class="drawing">
+    <img src={image} alt={alt} loading="lazy" width="800" height="560" />
+  </div>
+  <div class="title-block">
+    <div class="tb-title">
+      <Heading>{title}</Heading>
+      {sample && <span class="sample-tag">Sample, replace me</span>}
+    </div>
+    <div class="tb-note">
+      <p class="tb-label">What this shows</p>
+      <p>{whatThisShows}</p>
+    </div>
+  </div>
+</article>
+
+<style>
+  .sheet {
+    border: 1px solid var(--line);
+    background: var(--ink-raised);
+    display: flex;
+    flex-direction: column;
+  }
+  .drawing { padding: 12px; border-bottom: 1px solid var(--line); }
+  .drawing img { width: 100%; height: auto; aspect-ratio: 10 / 7; object-fit: contain; }
+
+  /* Title block: ruled cells like the corner box on a technical drawing */
+  .title-block { display: grid; flex: 1; }
+  .tb-title {
+    padding: 16px 18px 14px;
+    border-bottom: 1px solid var(--line);
+    display: grid;
+    gap: 10px;
+    justify-items: start;
+  }
+  .tb-note { padding: 14px 18px 18px; display: grid; gap: 4px; align-content: start; font-size: 1rem; }
+  .tb-label { color: var(--muted); font-size: 0.875rem; font-weight: 700; }
+</style>

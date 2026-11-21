@@ -1,0 +1,161 @@
+---
+// Seven-segment countdown to the next weekly episode.
+// Set the weekday and hour in src/data/site.ts
+import { site } from '../data/site';
+
+interface Props { nextLabel: string }
+const { nextLabel } = Astro.props;
+const { weekday, hour } = site.nextEpisode;
+
+const groups = [
+  { key: 'd', label: 'days' },
+  { key: 'h', label: 'hours' },
+  { key: 'm', label: 'minutes' },
+  { key: 's', label: 'seconds' },
+];
+const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+---
+<section class="clock" aria-labelledby="clock-title" data-weekday={weekday} data-hour={hour}>
+  <div class="clock-head">
+    <h2 id="clock-title">Next episode in</h2>
+    <p>{nextLabel}</p>
+  </div>
+
+  <div class="readout" role="timer" aria-live="off">
+    {groups.map((g, i) => (
+      <>
+        {i > 0 && <span class="colon" aria-hidden="true"><i></i><i></i></span>}
+        <div class="group">
+          <div class="digits" data-group={g.key} aria-hidden="true">
+            {[0, 1].map(() => (
+              <span class="digit">
+                {segs.map((s) => <span class={`seg ${s}`}></span>)}
+              </span>
+            ))}
+          </div>
+          <span class="unit">{g.label}</span>
+        </div>
+      </>
+    ))}
+    <span class="visually-hidden" data-spoken>Countdown loading</span>
+  </div>
+</section>
+
+<script>
+  const MAP: Record<string, string> = {
+    '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc',
+    '5': 'afgcd', '6': 'afgedc', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg',
+  };
+
+  const clock = document.querySelector<HTMLElement>('.clock');
+  if (clock) {
+    const weekday = Number(clock.dataset.weekday);
+    const hour = Number(clock.dataset.hour);
+    const spoken = clock.querySelector<HTMLElement>('[data-spoken]')!;
+
+    const nextTarget = (now: Date) => {
+      const t = new Date(now);
+      t.setHours(hour, 0, 0, 0);
+      let add = (weekday - now.getDay() + 7) % 7;
+      if (add === 0 && t <= now) add = 7;
+      t.setDate(t.getDate() + add);
+      return t;
+    };
+
+    const paint = (key: string, value: number) => {
+      const text = String(Math.min(value, 99)).padStart(2, '0');
+      const digits = clock.querySelectorAll(`[data-group="${key}"] .digit`);
+      digits.forEach((digit, i) => {
+        const on = MAP[text[i]];
+        digit.querySelectorAll<HTMLElement>('.seg').forEach((seg) => {
+          seg.classList.toggle('on', on.includes(seg.classList[1]));
+        });
+      });
+    };
+
+    let lastMinute = -1;
+    const tick = () => {
+      const now = new Date();
+      const left = Math.max(0, nextTarget(now).getTime() - now.getTime());
+      const total = Math.floor(left / 1000);
+      const d = Math.floor(total / 86400);
+      const h = Math.floor((total % 86400) / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      paint('d', d); paint('h', h); paint('m', m); paint('s', s);
+      if (m !== lastMinute) {
+        lastMinute = m;
+        spoken.textContent = `${d} days, ${h} hours and ${m} minutes until the next episode`;
+      }
+    };
+    tick();
+    setInterval(tick, 1000);
+  }
+</script>
+
+<style>
+  .clock {
+    --h: clamp(44px, 11vw, 124px);   /* digit height */
+    --t: calc(var(--h) * 0.11);    /* segment thickness */
+    border: 1px solid var(--line);
+    background: var(--ink-raised);
+    padding: clamp(20px, 4vw, 36px);
+    display: grid;
+    gap: clamp(18px, 3vw, 28px);
+  }
+  .clock-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; }
+  .clock-head h2 { font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 700; }
+  .clock-head p { color: var(--signal); font-weight: 700; }
+
+  .readout { display: flex; align-items: flex-start; gap: calc(var(--h) * 0.14); }
+  .group { display: grid; gap: 10px; justify-items: start; }
+  .digits { display: flex; gap: calc(var(--h) * 0.12); }
+  .unit { color: var(--muted); font-size: 0.875rem; }
+
+  .digit { position: relative; width: calc(var(--h) * 0.56); height: var(--h); }
+  .seg {
+    position: absolute;
+    background: var(--signal-ghost);
+    transition: background-color 120ms linear;
+  }
+  .seg.on { background: var(--signal); box-shadow: 0 0 calc(var(--t) * 1.2) rgba(242, 179, 61, 0.45); }
+
+  /* horizontal segments */
+  .a, .g, .d {
+    left: calc(var(--t) * 0.6);
+    right: calc(var(--t) * 0.6);
+    height: var(--t);
+    clip-path: polygon(0 50%, 14% 0, 86% 0, 100% 50%, 86% 100%, 14% 100%);
+  }
+  .a { top: 0; }
+  .g { top: calc(50% - var(--t) / 2); }
+  .d { bottom: 0; }
+
+  /* vertical segments */
+  .b, .c, .e, .f {
+    width: var(--t);
+    height: calc(50% - var(--t) * 0.6);
+    clip-path: polygon(50% 0, 100% 12%, 100% 88%, 50% 100%, 0 88%, 0 12%);
+  }
+  .f { left: 0; top: calc(var(--t) * 0.55); }
+  .b { right: 0; top: calc(var(--t) * 0.55); }
+  .e { left: 0; bottom: calc(var(--t) * 0.55); }
+  .c { right: 0; bottom: calc(var(--t) * 0.55); }
+
+  .colon {
+    height: var(--h);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: calc(var(--h) * 0.24);
+    animation: blink 1s steps(1) infinite;
+  }
+  .colon i { display: block; width: var(--t); height: var(--t); background: var(--signal); }
+  @keyframes blink { 50% { opacity: 0.2; } }
+
+  @media (max-width: 420px) {
+    .clock { --h: 40px; }
+    .readout { gap: 6px; }
+    .unit { font-size: 0.8125rem; }
+  }
+</style>

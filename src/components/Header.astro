@@ -1,0 +1,57 @@
+---
+import { site } from '../data/site';
+
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/mission-files/', label: 'Mission Files' },
+  { href: '/episodes/', label: 'Episodes' },
+  { href: '/projects/', label: 'Projects' },
+  { href: '/about/', label: 'About' },
+];
+const path = Astro.url.pathname.replace(/\/?$/, '/');
+---
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="mark" href="/">{site.name}</a>
+    <nav aria-label="Main">
+      <ul>
+        {links.map((l) => (
+          <li>
+            <a href={l.href} aria-current={path === l.href ? 'page' : undefined}>{l.label}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header { border-bottom: 1px solid var(--line); background: rgba(10, 26, 47, 0.88); }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 32px;
+    padding-block: 18px;
+  }
+  .mark {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.75rem;
+    text-decoration: none;
+    line-height: 1;
+  }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 22px; }
+  nav a {
+    display: inline-block;
+    padding-block: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    border-bottom: 2px solid transparent;
+  }
+  nav a:hover { color: var(--paper); }
+  nav a[aria-current='page'] { color: var(--paper); border-bottom-color: var(--signal); }
+</style>

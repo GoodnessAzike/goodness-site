@@ -1,0 +1,24 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import MissionCard from '../components/MissionCard.astro';
+
+const files = (await getCollection('missions')).sort((a, b) => a.data.order - b.data.order);
+---
+<Base title="Mission Files" description="Simple data workflow diagrams, each with a plain-English note.">
+  <header class="page-head">
+    <h1>Mission Files</h1>
+    <p>Data workflows I have mapped out while learning, each with a plain-English note on what it shows.</p>
+  </header>
+
+  <div class="grid">
+    {files.map((file) => <MissionCard file={file} headingLevel="h2" />)}
+  </div>
+  {files.length === 0 && <p class="empty">No Mission Files yet. Add a Markdown file to src/content/missions/ to open the first one.</p>}
+</Base>
+
+<style>
+  .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+  .grid :global(h2) { font-size: 1.625rem; font-weight: 700; line-height: 1.05; }
+  .empty { color: var(--muted); }
+</style>

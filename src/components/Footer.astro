@@ -1,0 +1,15 @@
+---
+import { site } from '../data/site';
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="wrap row">
+    <p>{site.name}, {year}. Built with Astro.</p>
+    <p>New episodes weekly. <a href="/episodes/">Catch up on the log</a>.</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 1rem; }
+  .row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 32px; padding-block: 28px; }
+</style>

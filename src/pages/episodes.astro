@@ -1,0 +1,74 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../layouts/Base.astro';
+
+const episodes = (await getCollection('episodes')).sort(
+  (a, b) => b.data.season - a.data.season || b.data.episode - a.data.episode,
+);
+const rendered = await Promise.all(
+  episodes.map(async (ep) => ({ ep, Content: (await render(ep)).Content })),
+);
+const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+---
+<Base title="Episodes" description="A weekly learning log, newest first.">
+  <header class="page-head">
+    <h1>Episodes</h1>
+    <p>A weekly log of what I am learning, newest first. Each one ends with what I am learning next.</p>
+  </header>
+
+  <ol class="log" reversed>
+    {rendered.map(({ ep, Content }) => (
+      <li class="entry">
+        <div class="marker" aria-hidden="true"></div>
+        <article>
+          <p class="code">Season {ep.data.season}, Episode {ep.data.episode}</p>
+          <h2>{ep.data.title}</h2>
+          <p class="meta">
+            <time datetime={ep.data.date.toISOString().slice(0, 10)}>{fmt.format(ep.data.date)}</time>
+            {ep.data.sample && <span class="sample-tag">Sample, replace me</span>}
+          </p>
+          <div class="notes"><Content /></div>
+          <p class="cliff"><span class="cliff-label">Next time:</span> {ep.data.cliffhanger}</p>
+          {ep.data.medium
+            ? <a class="button" href={ep.data.medium} target="_blank" rel="noopener">Read this episode on Medium</a>
+            : <span class="ph">Placeholder: Medium link</span>}
+        </article>
+      </li>
+    ))}
+  </ol>
+  {episodes.length === 0 && <p>No episodes yet. Add a Markdown file to src/content/episodes/ to start Season 1.</p>}
+</Base>
+
+<style>
+  .log { list-style: none; margin: 0; padding: 0; display: grid; }
+  .entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 0 clamp(14px, 3vw, 28px);
+    padding-bottom: clamp(40px, 6vw, 64px);
+  }
+  /* timeline rail */
+  .entry::before {
+    content: '';
+    position: absolute;
+    left: 13px; top: 14px; bottom: 0;
+    width: 2px;
+    background: var(--line);
+  }
+  .entry:last-child::before { display: none; }
+  .marker { width: 28px; height: 28px; border: 2px solid var(--line); background: var(--ink); position: relative; z-index: 1; }
+  .entry:first-child .marker { border-color: var(--signal); background: var(--signal-ghost); }
+
+  article { display: grid; gap: 12px; justify-items: start; min-width: 0; }
+  .code { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; color: var(--muted); line-height: 1.2; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; color: var(--muted); font-size: 1rem; }
+  .notes { max-width: var(--measure); }
+  .notes :global(p + p) { margin-top: 0.8em; }
+  .cliff {
+    border-left: 3px solid var(--signal);
+    padding: 4px 0 4px 14px;
+    font-style: italic;
+  }
+  .cliff-label { color: var(--signal); font-style: normal; font-weight: 700; }
+</style>
