@@ -36,14 +36,6 @@ const episodes = defineCollection({
     // Link to the Medium post. Leave empty until it is published.
     medium: z.string().default(''),
     sample: z.boolean().default(false),
-    // Optional whiteboard drawing that plays at the top of the episode page.
-    // Each step becomes a box. `note` is an optional red side note.
-    drawing: z
-      .object({
-        title: z.string(),
-        steps: z.array(z.object({ label: z.string(), note: z.string().optional() })),
-      })
-      .optional(),
   }),
 });
 
