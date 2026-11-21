@@ -7,7 +7,7 @@ export const site = {
     'One thing about me: I am in my era of spotting patterns by trial and error, clocking the pattern, and writing it down.',
   ],
   // Shown in the "Get in touch" box on the About page
-  openTo: 'Open to mid-level data engineering roles in the UK, Leeds or remote.',
+  openTo: 'Open to working as a data engineer with an amazing team.',
   // Short bio for the About page. One string per paragraph.
   bio: [
     'I am a Data Engineer at Aiera, a US financial data company, where I build and govern the data infrastructure behind financial intelligence: event-driven pipelines on AWS (Lambda, SQS, Terraform), data quality checks, and a catalog in OpenMetadata.',
