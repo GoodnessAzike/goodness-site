@@ -1,6 +1,8 @@
 ---
-// Marks content Goodness still needs to write. Shows as a dashed box.
+// Marks content Goodness still needs to write. Shows as a dashed box while working
+// on the site (npm run dev). On the live site it shows nothing.
 interface Props { block?: boolean }
 const { block = false } = Astro.props;
+const show = import.meta.env.DEV;
 ---
-<span class:list={['ph', { 'ph-block': block }]}>Placeholder: <slot /></span>
+{show && <span class:list={['ph', { 'ph-block': block }]}>Placeholder: <slot /></span>}

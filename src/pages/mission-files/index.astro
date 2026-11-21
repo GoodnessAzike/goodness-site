@@ -3,7 +3,8 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import MissionCard from '../../components/MissionCard.astro';
 
-const files = (await getCollection('missions')).sort((a, b) => a.data.order - b.data.order);
+// On the live site, sample Mission Files are hidden
+const files = (await getCollection('missions', ({ data }) => import.meta.env.DEV || !data.sample)).sort((a, b) => a.data.order - b.data.order);
 ---
 <Base title="Mission Files" description="Simple data workflow diagrams, each with a plain-English note.">
   <header class="page-head">

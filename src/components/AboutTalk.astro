@@ -6,7 +6,10 @@ import Placeholder from './Placeholder.astro';
 
 const { audio, slides, transcript } = site.talk;
 const ready = Boolean(audio) && slides.length > 0;
+// On the live site, the section only appears once the recording and photos are added
+const visible = ready || import.meta.env.DEV;
 ---
+{visible && (
 <section class="talk" aria-labelledby="talk-title">
   <h2 id="talk-title">In my own voice</h2>
 
@@ -39,6 +42,7 @@ const ready = Boolean(audio) && slides.length > 0;
     </div>
   )}
 </section>
+)}
 
 <script>
   import { unlockAudio } from '../scripts/unlock-audio';

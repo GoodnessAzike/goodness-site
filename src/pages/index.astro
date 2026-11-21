@@ -8,7 +8,8 @@ import HowILearn from '../components/HowILearn.astro';
 import ScenarioBoard from '../components/ScenarioBoard.astro';
 import { site } from '../data/site';
 
-const featured = (await getCollection('missions', ({ data }) => data.featured))
+// On the live site, sample Mission Files are hidden
+const featured = (await getCollection('missions', ({ data }) => data.featured && (import.meta.env.DEV || !data.sample)))
   .sort((a, b) => a.data.order - b.data.order)
   .slice(0, 3);
 
@@ -41,6 +42,7 @@ const nextLabel = !latest
 
   <Countdown nextLabel={nextLabel} />
 
+  {featured.length > 0 && (
   <section class="featured" aria-labelledby="featured-title">
     <div class="featured-head">
       <h2 id="featured-title">Featured Mission Files</h2>
@@ -49,10 +51,8 @@ const nextLabel = !latest
     <div class="grid">
       {featured.map((file) => <MissionCard file={file} />)}
     </div>
-    {featured.length === 0 && (
-      <p class="empty">Mark up to three Mission Files with <code>featured: true</code> to show them here.</p>
-    )}
   </section>
+  )}
 </Base>
 
 <style>

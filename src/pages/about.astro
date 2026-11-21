@@ -4,6 +4,11 @@ import Placeholder from '../components/Placeholder.astro';
 import AboutTalk from '../components/AboutTalk.astro';
 import { site } from '../data/site';
 import { themeSongs } from '../data/songs';
+
+// On the live site, only show songs that have a title, and only stages that have songs
+const stages = themeSongs
+  .map((st) => ({ ...st, songs: st.songs.filter((t) => import.meta.env.DEV || t.song) }))
+  .filter((st) => st.songs.length > 0);
 ---
 <Base title="About" description={`About ${site.name}, plus contact links and CV.`}>
   <header class="page-head">
@@ -46,14 +51,15 @@ import { themeSongs } from '../data/songs';
     </section>
   )}
 
+  {stages.length > 0 && (
   <section class="songs" aria-labelledby="songs-title">
     <div class="songs-head">
       <h2 id="songs-title">Theme Songs</h2>
-      <p>The soundtrack so far, by life stage. Links open on Spotify or YouTube.</p>
+      <p>The soundtrack so far, by life stage.{stages.some((st) => st.songs.some((t) => t.url)) && ' Links open on Spotify or YouTube.'}</p>
     </div>
 
     <ol class="stages">
-      {themeSongs.map((stage) => (
+      {stages.map((stage) => (
         <li class="stage">
           <h3>{stage.stage}</h3>
           <ul class="tracks">
@@ -69,8 +75,8 @@ import { themeSongs } from '../data/songs';
                 </div>
                 {t.note
                   ? <p class="note">{t.note}</p>
-                  : <p class="note"><Placeholder>one-line note</Placeholder></p>}
-                {!t.url && <p class="note"><Placeholder>Spotify or YouTube link</Placeholder></p>}
+                  : import.meta.env.DEV && <p class="note"><Placeholder>one-line note</Placeholder></p>}
+                {!t.url && import.meta.env.DEV && <p class="note"><Placeholder>Spotify or YouTube link</Placeholder></p>}
               </li>
             ))}
           </ul>
@@ -78,6 +84,7 @@ import { themeSongs } from '../data/songs';
       ))}
     </ol>
   </section>
+  )}
 </Base>
 
 <style>
