@@ -1,0 +1,361 @@
+---
+// Home page whiteboard: it opens, and a hand draws Scenario 2 out piece by piece,
+// the way Goodness draws a pipeline. Same labels and layout as the Mission File page.
+import { wide, tall, head, tagW, PATH, TITLE, SENTENCE, QUOTE, type Layout } from '../data/scenario2';
+
+type Item =
+  | { kind: 'line'; d: string; cls: string; fill?: boolean }
+  | { kind: 'text'; x: number; y: number; size: number; cls: string; anchor?: 'start' | 'middle' | 'end'; lines: string[] }
+  | { kind: 'pop'; cls: string; x: number; y: number; html: string };
+
+// Rounded rectangle as a path, so it can be drawn stroke by stroke
+const rr = (x: number, y: number, w: number, h: number, r: number) =>
+  `M${x + r} ${y} H${x + w - r} A${r} ${r} 0 0 1 ${x + w} ${y + r} V${y + h - r} A${r} ${r} 0 0 1 ${x + w - r} ${y + h} H${x + r} A${r} ${r} 0 0 1 ${x} ${y + h - r} V${y + r} A${r} ${r} 0 0 1 ${x + r} ${y} Z`;
+
+function wrap(text: string, max: number) {
+  const out: string[] = [];
+  let line = '';
+  for (const w of text.split(' ')) {
+    if (line && (line + ' ' + w).length > max) { out.push(line); line = w; }
+    else line = line ? `${line} ${w}` : w;
+  }
+  if (line) out.push(line);
+  return out;
+}
+
+const STRIPE_ICON = `<rect width="52" height="52" rx="9" fill="#545b64"/><rect x="14" y="14.5" width="24" height="9.5" rx="2.5" fill="none" stroke="#fff" stroke-width="2"/><rect x="14" y="28" width="24" height="9.5" rx="2.5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="19" cy="19.25" r="1.5" fill="#fff"/><circle cx="19" cy="32.75" r="1.5" fill="#fff"/>`;
+const LAMBDA_ICON = `<rect width="52" height="52" rx="9" fill="#ed7100"/><path d="M17 40 L24.5 24 M19.5 13 H25 L35.5 40" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+interface Extra { top: number; sentenceMax: number; quoteY: number; quoteMax: number; quoteX: number; quoteAnchor: 'start' | 'middle' }
+
+function build(L: Layout, X: Extra) {
+  const items: Item[] = [];
+  const f = L.fs;
+  const tag = (x: number, y: number, text: string, cls: string, inside = false) => {
+    items.push({ kind: 'pop', cls: inside ? 'tag-bg inside' : 'tag-bg', x, y, html: `<rect x="${x - 6}" y="${y - f.tag * 0.75}" width="${tagW(text, f.tag)}" height="${f.tag * 1.5}" />` });
+    items.push({ kind: 'text', x, y: y + f.tag * 0.36, size: f.tag, cls: `tag ${cls}`, lines: [text] });
+  };
+  const box = (b: { x: number; y: number; w: number; h: number }, cls: string, lines: string[]) => {
+    items.push({ kind: 'line', d: rr(b.x, b.y, b.w, b.h, 9), cls, fill: true });
+    const lh = f.bold * 1.2;
+    items.push({ kind: 'text', x: b.x + b.w / 2, y: b.y + b.h / 2 + f.bold * 0.35 - ((lines.length - 1) * lh) / 2, size: f.bold, cls: 'bold', anchor: 'middle', lines });
+  };
+  const arrow = (a: { d: string; end: [number, number]; dir: 'right' | 'down' | 'left' }) => {
+    items.push({ kind: 'line', d: a.d, cls: 'arrow' });
+    items.push({ kind: 'pop', cls: 'head', x: a.end[0], y: a.end[1], html: `<polygon points="${head(a.end, a.dir)}" />` });
+  };
+  const icon = (i: { x: number; y: number; s: number }, svg: string) =>
+    items.push({ kind: 'pop', cls: 'icon', x: i.x + i.s / 2, y: i.y + i.s / 2, html: `<g transform="translate(${i.x} ${i.y}) scale(${i.s / 52})">${svg}</g>` });
+
+  // Title and brief, written first
+  items.push({ kind: 'text', x: L.account.x + 2, y: X.top, size: f.bold + 6, cls: 'bold', lines: [TITLE] });
+  items.push({ kind: 'text', x: L.account.x + 2, y: X.top + 26, size: f.mono + 0.5, cls: 'sub', lines: wrap(SENTENCE, X.sentenceMax) });
+
+  // Stripe API, outside the account
+  items.push({ kind: 'line', d: rr(L.outbound.x, L.outbound.y, L.outbound.w, L.outbound.h, 10), cls: 'outbound' });
+  tag(L.outbound.tag[0], L.outbound.tag[1], 'OUTBOUND', 't-outbound');
+  icon(L.stripe, STRIPE_ICON);
+  items.push({ kind: 'text', x: L.stripe.text[0], y: L.stripe.text[1], size: f.bold, cls: 'bold', anchor: 'middle', lines: ['Stripe API'] });
+  items.push({ kind: 'text', x: L.stripe.text[0], y: L.stripe.text[2], size: f.mono, cls: 'mono', anchor: 'middle', lines: ['payments, last 3 days'] });
+
+  // The AWS account
+  items.push({ kind: 'line', d: rr(L.account.x, L.account.y, L.account.w, L.account.h, 12), cls: 'account', fill: true });
+  tag(L.account.tag[0], L.account.tag[1], 'AWS ACCOUNT · eu-west-2', 't-account');
+
+  // Payments down to Lambda
+  arrow(L.pay);
+  items.push({ kind: 'text', x: L.pay.label[0], y: L.pay.label[1], size: f.mono, cls: 'mono', anchor: 'end', lines: ['payments'] });
+  icon(L.lambda, LAMBDA_ICON);
+  items.push({ kind: 'text', x: L.lambda.text[0], y: L.lambda.text[1], size: f.bold, cls: 'bold', anchor: 'middle', lines: ['Lambda'] });
+  items.push({ kind: 'text', x: L.lambda.text[0], y: L.lambda.text[2], size: f.mono, cls: 'mono', anchor: 'middle', lines: ['nightly, 22:00'] });
+
+  // The October bucket, then each write and its version
+  items.push({ kind: 'line', d: rr(L.bucketL.x, L.bucketL.y, L.bucketL.w, L.bucketL.h, 10), cls: 'bucket' });
+  tag(L.bucketL.tag[0], L.bucketL.tag[1], 'S3 BUCKET · 28 OCTOBER', 't-bucket', true);
+  L.writes.forEach((w, i) => {
+    arrow(w);
+    items.push({ kind: 'pop', cls: 'badge', x: w.badge[0], y: w.badge[1], html: `<circle cx="${w.badge[0]}" cy="${w.badge[1]}" r="${f.mono * 0.72}" fill="#2f6fe0" /><text x="${w.badge[0]}" y="${w.badge[1] + f.mono * 0.36}" font-size="${f.mono * 0.95}" text-anchor="middle" fill="#fff" font-weight="700" font-family="Atkinson Hyperlegible, system-ui, sans-serif">${w.n}</text>` });
+    items.push({ kind: 'text', x: w.badge[0] + f.mono * 1.25, y: w.badge[1] + f.mono * 0.36, size: f.mono, cls: 'mono', lines: [w.text] });
+    box(L.versionsL[i], 'version', L.versionsL[i].lines);
+    if (i === 0) items.push({ kind: 'text', x: L.pathL[0], y: L.pathL[1], size: f.mono, cls: 'mono', anchor: 'middle', lines: [PATH] });
+  });
+
+  // The lifecycle rule and the November bucket
+  items.push({ kind: 'line', d: rr(L.lifecycle.x, L.lifecycle.y, L.lifecycle.w, L.lifecycle.h, 10), cls: 'lifecycle', fill: true });
+  items.push({ kind: 'text', x: L.lifecycle.x + L.lifecycle.w / 2, y: L.lifecycle.y + L.lifecycle.h / 2 - 2, size: f.bold, cls: 'bold', anchor: 'middle', lines: ['Lifecycle rule'] });
+  items.push({ kind: 'text', x: L.lifecycle.x + L.lifecycle.w / 2, y: L.lifecycle.y + L.lifecycle.h / 2 + f.mono + 3, size: f.mono, cls: 'sub', anchor: 'middle', lines: ['NoncurrentDays 30'] });
+  items.push({ kind: 'line', d: rr(L.bucketR.x, L.bucketR.y, L.bucketR.w, L.bucketR.h, 10), cls: 'bucket' });
+  tag(L.bucketR.tag[0], L.bucketR.tag[1], 'S3 BUCKET · FROM 28 NOVEMBER', 't-bucket', true);
+  const [v1, v2, v3] = L.versionsR;
+  box(v3, 'version', v3.lines);
+  L.lcArrows.forEach(arrow);
+  box(v2, 'deleted', v2.lines);
+  box(v1, 'deleted', v1.lines);
+  items.push({ kind: 'text', x: L.pathR[0], y: L.pathR[1], size: f.mono, cls: 'mono', anchor: 'middle', lines: [PATH] });
+
+  // The AWS quote at the bottom
+  items.push({ kind: 'text', x: X.quoteX, y: X.quoteY, size: f.mono - 0.5, cls: 'sub', anchor: X.quoteAnchor, lines: wrap(QUOTE, X.quoteMax) });
+  return items;
+}
+
+const views = [
+  { key: 'wide', viewBox: '20 16 1200 700', items: build(wide, { top: 48, sentenceMax: 200, quoteY: 694, quoteMax: 200, quoteX: 620, quoteAnchor: 'middle' }) },
+  // the phone layout is shifted down to make room for the title and brief
+  { key: 'tall', viewBox: '0 -112 400 1060', items: build(tall, { top: -80, sentenceMax: 56, quoteY: 912, quoteMax: 62, quoteX: 12, quoteAnchor: 'start' }) },
+];
+
+const story =
+  'A hand draws Scenario 2 on a whiteboard. A Stripe API outside the AWS account sends payments from the last 3 days to a Lambda that runs nightly at 22:00. ' +
+  'The Lambda writes raw/payments/2026-10-26.json to an S3 bucket on 26 October as version 1, then refunds on 27 and 28 October add version 2 and version 3. ' +
+  'A lifecycle rule with NoncurrentDays 30 means that from 28 November, version 1 is deleted on 27 November and version 2 on 28 November, and version 3 stays.';
+---
+<section class="board-section" aria-label="Whiteboard: how I draw a pipeline">
+  <div class="board" data-board>
+    {views.map((v) => (
+      <svg class={`v-${v.key}`} viewBox={v.viewBox} role="img" aria-label={story}>
+        <defs>
+          {v.items.map((it, i) => it.kind === 'line'
+            ? <mask id={`sb-${v.key}-m${i}`} maskUnits="userSpaceOnUse" x="-200" y="-300" width="1800" height="1600"><path class="reveal" d={it.d} /></mask>
+            : it.kind === 'text'
+              ? <clipPath id={`sb-${v.key}-c${i}`}><rect class="clip" x="-200" y="-300" width="1800" height="1600" /></clipPath>
+              : null)}
+        </defs>
+        {v.items.map((it, i) => it.kind === 'line'
+          ? <path class:list={['sb', it.cls, { fillable: it.fill }]} d={it.d} mask={`url(#sb-${v.key}-m${i})`} data-kind="line" data-ref={`sb-${v.key}-m${i}`} />
+          : it.kind === 'text'
+            ? (
+              <g clip-path={`url(#sb-${v.key}-c${i})`} data-kind="text" data-ref={`sb-${v.key}-c${i}`}>
+                <text class={it.cls} x={it.x} y={it.y} font-size={it.size} text-anchor={it.anchor ?? 'start'}>
+                  {it.lines.map((l, j) => <tspan x={it.x} dy={j === 0 ? 0 : it.size * 1.3}>{l}</tspan>)}
+                </text>
+              </g>
+            )
+            : <g class:list={['pop', it.cls]} data-kind="pop" data-x={it.x} data-y={it.y} set:html={it.html} />)}
+
+        <!-- line-art hand holding a marker; pen tip at 0,0 -->
+        <g class="hand" data-hand aria-hidden="true" style="opacity:0">
+          <g transform={`rotate(-28) scale(${v.key === 'wide' ? 1 : 0.8})`}>
+            <path d="M-5 -16 L5 -16 L1.6 -2 L-1.6 -2 Z" fill="#1f2328" />
+            <rect x="-7.5" y="-118" width="15" height="103" rx="3" fill="#1f2328" />
+            <rect x="-7.5" y="-118" width="15" height="22" rx="3" fill="#ed7100" />
+            <path d="M-9 -40 C -21 -56, -16 -86, 0 -92 C 22 -100, 58 -96, 73 -70 C 88 -44, 72 -18, 46 -17 C 26 -16, 6 -24, -9 -40 Z" fill="#fff" stroke="#1f2328" stroke-width="2.6" stroke-linejoin="round" />
+            <path d="M-4 -52 C 10 -49, 22 -52, 33 -59 M-2 -65 C 12 -62, 26 -66, 37 -73 M2 -78 C 15 -76, 27 -79, 38 -85" fill="none" stroke="#1f2328" stroke-width="2.2" stroke-linecap="round" />
+            <path d="M-12 -74 C -28 -68, -24 -50, -7 -47" fill="#fff" stroke="#1f2328" stroke-width="2.6" stroke-linecap="round" />
+            <path d="M46 -17 L 96 52 M73 -70 L 140 -8" fill="none" stroke="#1f2328" stroke-width="2.6" stroke-linecap="round" />
+          </g>
+        </g>
+      </svg>
+    ))}
+  </div>
+  <div class="under">
+    <button type="button" class="replay" data-replay>Draw it again</button>
+    <a href="/mission-files/scenario-2/">See Scenario 2 step by step</a>
+  </div>
+</section>
+
+<script>
+  const SPEED = 2200; // path units per second
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  const section = document.querySelector<HTMLElement>('.board-section');
+  if (section) {
+    const board = section.querySelector<HTMLElement>('[data-board]')!;
+    const svgs = Array.from(board.querySelectorAll('svg'));
+    let run = 0;
+
+    const refOf = (svg: SVGSVGElement, el: Element) => svg.querySelector(`#${el.getAttribute('data-ref')}`)!;
+
+    const setAll = (svg: SVGSVGElement, drawn: boolean) => {
+      svg.querySelectorAll<SVGElement>('[data-kind]').forEach((el) => {
+        const kind = el.dataset.kind;
+        if (kind === 'line') {
+          const p = refOf(svg, el).querySelector<SVGPathElement>('path')!;
+          if (drawn) { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; el.removeAttribute('mask'); }
+          else {
+            const len = p.getTotalLength() || 1;
+            p.style.strokeDasharray = `${len}`; p.style.strokeDashoffset = `${len}`;
+            el.setAttribute('mask', `url(#${el.getAttribute('data-ref')})`);
+          }
+          el.classList.toggle('filled', drawn);
+        } else if (kind === 'text') {
+          refOf(svg, el).querySelector('rect')!.setAttribute('width', drawn ? '1800' : '0');
+        } else {
+          el.classList.toggle('shown', drawn);
+        }
+      });
+      svg.querySelector<SVGGElement>('[data-hand]')!.style.opacity = '0';
+    };
+
+    const play = async () => {
+      const me = ++run;
+      const svg = svgs.find((s) => s.getBoundingClientRect().width > 0) ?? svgs[0];
+      svgs.forEach((s) => setAll(s, s !== svg));
+      const hand = svg.querySelector<SVGGElement>('[data-hand]')!;
+      let hx = 0, hy = 0;
+      const at = (x: number, y: number) => { hx = x; hy = y; hand.setAttribute('transform', `translate(${x} ${y})`); };
+      const glide = async (x: number, y: number) => {
+        const sx = hx, sy = hy, t0 = await frame();
+        for (let now = t0; now - t0 < 140; now = await frame()) {
+          if (me !== run) return;
+          const t = (now - t0) / 140;
+          at(sx + (x - sx) * t, sy + (y - sy) * t);
+        }
+      };
+
+      board.classList.remove('open');
+      void board.offsetWidth;
+      board.classList.add('open');
+      await sleep(700);
+      const first = svg.querySelector<SVGElement>('[data-kind]')!;
+      const fb = (first.querySelector('text') as SVGTextElement).getBBox();
+      at(fb.x, fb.y + fb.height);
+      hand.style.opacity = '1';
+
+      for (const el of Array.from(svg.querySelectorAll<SVGElement>('[data-kind]'))) {
+        if (me !== run) return;
+        const kind = el.dataset.kind;
+        if (kind === 'line') {
+          const p = refOf(svg, el).querySelector<SVGPathElement>('path')!;
+          const len = p.getTotalLength();
+          const start = p.getPointAtLength(0);
+          await glide(start.x, start.y);
+          const dur = Math.max(140, (len / SPEED) * 1000);
+          const t0 = await frame();
+          for (let now = t0; now - t0 < dur; now = await frame()) {
+            if (me !== run) return;
+            const done = len * ((now - t0) / dur);
+            p.style.strokeDashoffset = `${len - done}`;
+            const pt = p.getPointAtLength(done);
+            at(pt.x, pt.y);
+          }
+          p.style.strokeDashoffset = '0';
+          el.removeAttribute('mask');
+          el.classList.add('filled');
+        } else if (kind === 'text') {
+          const text = el.querySelector('text')!;
+          const box = text.getBBox();
+          const rect = refOf(svg, el).querySelector('rect')!;
+          rect.setAttribute('x', `${box.x - 4}`);
+          await glide(box.x, box.y + box.height * 0.8);
+          const size = Number(text.getAttribute('font-size'));
+          const cps = size <= 13 ? 70 : 34; // small labels are written faster
+          const dur = Math.max(220, ((text.textContent || '').length / cps) * 1000);
+          const t0 = await frame();
+          for (let now = t0; now - t0 < dur; now = await frame()) {
+            if (me !== run) return;
+            const t = (now - t0) / dur;
+            rect.setAttribute('width', `${box.width * t + 4}`);
+            at(box.x + box.width * t, box.y + box.height * 0.85 + Math.sin(now / 40) * 2);
+          }
+          rect.setAttribute('x', '-200');
+          rect.setAttribute('width', '1800');
+        } else {
+          await glide(Number(el.dataset.x), Number(el.dataset.y));
+          el.classList.add('shown');
+          await sleep(el.classList.contains('icon') ? 260 : 60);
+        }
+      }
+      if (me !== run) return;
+      await sleep(400);
+      hand.style.opacity = '0';
+    };
+
+    section.querySelector('[data-replay]')!.addEventListener('click', () => { if (!reduce) play(); });
+
+    if (reduce) {
+      svgs.forEach((s) => setAll(s, true));
+    } else {
+      svgs.forEach((s) => setAll(s, false));
+      board.classList.add('waiting');
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          board.classList.remove('waiting');
+          document.fonts.ready.then(play);
+        }
+      }, { threshold: 0.3 });
+      io.observe(board);
+    }
+  }
+</script>
+
+<style>
+  .board-section { margin-bottom: clamp(48px, 8vw, 80px); display: grid; gap: 12px; }
+  .board {
+    --b-ink: #1f2328;
+    --b-muted: #5f6672;
+    --b-account: #c4762a;
+    --b-account-fill: #f5f3ef;
+    --b-bucket: #3d78d8;
+    --b-outbound: #9aa0a6;
+    --b-version: #7aa23a;
+    --b-version-fill: #e3ebd2;
+    --b-deleted: #9aa0a6;
+    --b-deleted-fill: #f1f1f0;
+    --b-rule: #4a7fdc;
+    --b-rule-fill: #dfe7f6;
+    --b-arrow: #8b93a3;
+    --b-badge: #2f6fe0;
+    --b-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 0 0 1px rgba(220, 230, 240, 0.25), 0 24px 60px rgba(0, 0, 0, 0.45);
+    padding: clamp(6px, 1.5vw, 16px);
+    overflow: hidden;
+    transform-origin: 50% 0;
+  }
+  .board.waiting { opacity: 0; }
+  .board.open { animation: open 0.65s cubic-bezier(0.2, 1.25, 0.4, 1) both; }
+  @keyframes open {
+    from { transform: scaleY(0.04) scaleX(0.9); opacity: 0.4; }
+    to { transform: none; opacity: 1; }
+  }
+
+  svg { display: block; width: 100%; height: auto; }
+  .v-tall { display: none; }
+  @media (max-width: 720px) {
+    .v-wide { display: none; }
+    .v-tall { display: block; }
+  }
+
+  .reveal { fill: none; stroke: #fff; stroke-width: 10; stroke-linecap: round; stroke-linejoin: round; }
+
+  .sb { fill: transparent; stroke-width: 1.7; transition: fill 0.35s; }
+  .outbound { stroke: var(--b-outbound); stroke-dasharray: 6 5; }
+  .account { stroke: var(--b-account); }
+  .account.filled { fill: var(--b-account-fill); }
+  .bucket { stroke: var(--b-bucket); stroke-dasharray: 6 5; }
+  .version { stroke: var(--b-version); }
+  .version.filled { fill: var(--b-version-fill); }
+  .deleted { stroke: var(--b-deleted); stroke-dasharray: 6 5; }
+  .deleted.filled { fill: var(--b-deleted-fill); }
+  .lifecycle { stroke: var(--b-rule); }
+  .lifecycle.filled { fill: var(--b-rule-fill); }
+  .arrow { stroke: var(--b-arrow); }
+
+  .bold { font-family: var(--font-body); font-weight: 700; fill: var(--b-ink); }
+  .sub { font-family: var(--font-body); fill: var(--b-muted); }
+  .mono { font-family: var(--b-mono); fill: var(--b-muted); }
+  .tag { font-family: var(--b-mono); font-weight: 700; letter-spacing: 0.04em; }
+  .t-account { fill: var(--b-account); }
+  .t-bucket { fill: var(--b-bucket); }
+  .t-outbound { fill: var(--b-muted); }
+
+  .pop { opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.6); transition: opacity 0.2s, transform 0.25s cubic-bezier(0.2, 1.5, 0.4, 1); }
+  .pop.shown { opacity: 1; transform: none; }
+  .tag-bg { fill: #fff; }
+  .tag-bg.inside { fill: var(--b-account-fill); }
+  .head { fill: var(--b-arrow); }
+  .hand { pointer-events: none; transition: opacity 0.3s; }
+
+  .under { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; }
+  .replay {
+    min-height: 44px; padding: 8px 16px;
+    border: 1.5px solid var(--line); background: transparent; color: var(--paper);
+    font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
+  }
+  .replay:hover { border-color: var(--paper); }
+</style>

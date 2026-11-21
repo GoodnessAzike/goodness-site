@@ -5,7 +5,7 @@ import Countdown from '../components/Countdown.astro';
 import MissionCard from '../components/MissionCard.astro';
 import Placeholder from '../components/Placeholder.astro';
 import HowILearn from '../components/HowILearn.astro';
-import PipelineBoard from '../components/PipelineBoard.astro';
+import ScenarioBoard from '../components/ScenarioBoard.astro';
 import { site } from '../data/site';
 
 const featured = (await getCollection('missions', ({ data }) => data.featured))
@@ -33,7 +33,7 @@ const nextLabel = latest
     </div>
   </section>
 
-  <PipelineBoard />
+  <ScenarioBoard />
 
   <Countdown nextLabel={nextLabel} />
 
