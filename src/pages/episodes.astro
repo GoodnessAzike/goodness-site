@@ -17,7 +17,9 @@ const seasonNumbers = [...new Set([
 ])].sort((a, b) => b - a);
 const seasons = seasonNumbers.map((n) => {
   const items = rendered.filter(({ ep }) => ep.data.season === n);
-  return { n, title: site.seasons[n]?.title, items, soon: items.length === 0 };
+  const total = site.seasons[n]?.episodes;
+  const latest = items[0]?.ep; // items are newest first
+  return { n, title: site.seasons[n]?.title, items, soon: items.length === 0, total, latest };
 });
 // Open on the newest season that has episodes
 const current = seasons.find((s) => !s.soon)?.n ?? seasons[0]?.n;
@@ -50,6 +52,35 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
   {seasons.map((season) => (
     <section class="season-block" aria-labelledby={`season-${season.n}`} data-season={season.n}>
       <h2 class="season" id={`season-${season.n}`}>{label(season)}</h2>
+      {!season.soon && (
+        <div class="recap">
+          {season.total && (
+            <div class="progress" role="img" aria-label={`${season.items.length} of ${season.total} episodes out${season.items.length < season.total ? ', finale next' : ', season complete'}`}>
+              <ol class="ticks" aria-hidden="true">
+                {Array.from({ length: season.total }, (_, i) => {
+                  const done = i < season.items.length;
+                  const next = i === season.items.length;
+                  const finale = i === season.total! - 1;
+                  return (
+                    <li class:list={['tick', { done, next, finale }]}>
+                      <span class="bar"></span>
+                      <span class="num">{finale ? 'Finale' : `Ep ${i + 1}`}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+              <p class="count">{season.items.length} of {season.total} out</p>
+            </div>
+          )}
+          {season.latest && (
+            <p class="previously">
+              <span class="prev-label">Previously on {season.title ?? `Season ${season.n}`}:</span>{' '}
+              {season.latest.data.title}.{' '}
+              <span class="prev-next">Next time: {season.latest.data.cliffhanger}</span>
+            </p>
+          )}
+        </div>
+      )}
       {season.soon ? (
         <div class="soon">
           <p class="soon-stamp">Coming soon</p>
@@ -219,6 +250,28 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
 <style>
   .season-block + .season-block { margin-top: clamp(24px, 4vw, 40px); }
   .season-block[hidden] { display: none; }
+
+  /* season progress + "Previously on" recap */
+  .recap { display: grid; gap: 20px; margin-bottom: 36px; }
+  .progress { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: end; max-width: 720px; }
+  .ticks { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
+  .tick { display: grid; gap: 6px; }
+  .tick .bar { height: 10px; background: var(--signal-ghost); border: 1px solid rgba(242, 179, 61, 0.25); }
+  .tick.done .bar { background: var(--signal); border-color: var(--signal); }
+  .tick.next .bar { animation: next-pulse 1.4s ease-in-out infinite; }
+  .tick .num { font-size: 0.8125rem; color: var(--muted); }
+  .tick.finale .num { font-family: var(--font-hand); font-weight: 700; color: var(--redline); font-size: 0.9375rem; }
+  .count { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; color: var(--signal); white-space: nowrap; }
+  @keyframes next-pulse { 0%, 100% { background: var(--signal-ghost); } 50% { background: rgba(242, 179, 61, 0.45); } }
+
+  .previously {
+    max-width: var(--measure);
+    border-left: 3px solid var(--line);
+    padding: 4px 0 4px 16px;
+    font-size: 1.0625rem;
+  }
+  .prev-label { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; color: var(--paper); }
+  .prev-next { font-family: var(--font-hand); color: var(--redline); font-weight: 700; }
 
   /* each episode opens and closes */
   .ep { width: 100%; }
