@@ -19,6 +19,10 @@ const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
   <div class="clock-head">
     <h2 id="clock-title">Next episode in</h2>
     <p>{nextLabel}</p>
+    <button type="button" class="sound" data-sound aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path class="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /></svg>
+      <span data-sound-label>Turn on sound</span>
+    </button>
   </div>
 
   <div class="readout" role="timer" aria-live="off">
@@ -42,6 +46,8 @@ const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 </section>
 
 <script>
+  import { createCountdownSound } from '../scripts/countdown-sound';
+
   const MAP: Record<string, string> = {
     '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc',
     '5': 'afgcd', '6': 'afgedc', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg',
@@ -73,7 +79,24 @@ const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
       });
     };
 
+    // Sound: off until the visitor turns it on; pauses when the clock is off screen or the tab is hidden
+    const sound = createCountdownSound();
+    const btn = clock.querySelector<HTMLButtonElement>('[data-sound]')!;
+    const label = clock.querySelector<HTMLElement>('[data-sound-label]')!;
+    let wanted = false, visible = true;
+    const sync = () => {
+      const play = wanted && visible && !document.hidden;
+      if (play && !sound.on) sound.start();
+      if (!play && sound.on) sound.stop();
+      btn.setAttribute('aria-pressed', String(wanted));
+      label.textContent = wanted ? 'Turn off sound' : 'Turn on sound';
+    };
+    btn.addEventListener('click', () => { wanted = !wanted; sync(); });
+    document.addEventListener('visibilitychange', sync);
+    new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; sync(); }).observe(clock);
+
     let lastMinute = -1;
+    let lastSecond = -1;
     const tick = () => {
       const now = new Date();
       const left = Math.max(0, nextTarget(now).getTime() - now.getTime());
@@ -83,6 +106,11 @@ const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
       const m = Math.floor((total % 3600) / 60);
       const s = total % 60;
       paint('d', d); paint('h', h); paint('m', m); paint('s', s);
+      if (s !== lastSecond) {
+        if (lastMinute !== -1 && m !== lastMinute) sound.minute();
+        else if (lastSecond !== -1) sound.tick();
+        lastSecond = s;
+      }
       if (m !== lastMinute) {
         lastMinute = m;
         spoken.textContent = `${d} days, ${h} hours and ${m} minutes until the next episode`;
@@ -105,7 +133,18 @@ const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
   }
   .clock-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 24px; }
   .clock-head h2 { font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 700; }
-  .clock-head p { color: var(--signal); font-weight: 700; }
+  .clock-head p { color: var(--signal); font-weight: 700; margin-right: auto; }
+  .sound {
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 44px; padding: 6px 14px;
+    border: 1.5px solid var(--line); background: transparent; color: var(--paper);
+    font: inherit; font-size: 0.9375rem; font-weight: 700; cursor: pointer;
+  }
+  .sound:hover { border-color: var(--paper); }
+  .sound svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .sound .waves { opacity: 0.35; }
+  .sound[aria-pressed='true'] { border-color: var(--signal); color: var(--signal); }
+  .sound[aria-pressed='true'] .waves { opacity: 1; }
 
   .readout { display: flex; align-items: flex-start; gap: calc(var(--h) * 0.14); }
   .group { display: grid; gap: 10px; justify-items: start; }
