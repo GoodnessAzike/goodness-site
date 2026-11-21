@@ -15,6 +15,7 @@ const projects = (await getCollection('projects')).sort((a, b) => a.data.order -
       <article class="project">
         <div class="top">
           <h2>{p.data.title}</h2>
+          {p.data.building && <span class="building">Still building</span>}
           {p.data.sample && <span class="sample-tag">Sample, replace me</span>}
         </div>
         <p>{p.data.summary}</p>
@@ -48,6 +49,13 @@ const projects = (await getCollection('projects')).sort((a, b) => a.data.order -
   .top { display: grid; gap: 10px; justify-items: start; }
   .project h2 { font-size: 1.75rem; font-weight: 700; line-height: 1.05; }
   .project > p { font-size: 1rem; }
+  .building {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 2px 10px; border: 1px solid var(--line);
+    font-size: 0.875rem; font-weight: 700; color: var(--paper);
+  }
+  .building::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--signal); animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: 0.25; } }
   .stack { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
   .stack li { border: 1px solid var(--line); padding: 2px 10px; font-size: 0.875rem; color: var(--muted); }
   .foot { margin-top: auto; padding-top: 6px; }

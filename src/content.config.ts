@@ -56,6 +56,8 @@ const projects = defineCollection({
     stack: z.array(z.string()).default([]),
     // GitHub repo link. Leave empty until the repo is public.
     github: z.string().default(''),
+    // true = shows a "Still building" tag
+    building: z.boolean().default(false),
     order: z.number().default(100),
     sample: z.boolean().default(false),
   }),
