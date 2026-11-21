@@ -18,7 +18,11 @@ export const site = {
   // A line can also be { text: '...', link: 'https://...', linkText: '...' } to add a link under it.
   outsideWork: [
     'Wrote DO IT MATHEMATICS, a maths book for children aged 7 to 10.',
-    'London Chapter Lead for Teens in AI, where I have run hackathons and mentored young technologists.',
+    {
+      text: 'London Chapter Lead for Teens in AI, where I have run hackathons and mentored young technologists.',
+      link: 'https://www.linkedin.com/posts/goodnessazike_co-healthyhabits-pathpilot-ugcPost-7436434874791665664-iRhr/',
+      linkText: 'See the post',
+    },
     {
       text: 'Active in Women in Data, and spoke in the Women Shaping Tech series.',
       link: 'https://www.linkedin.com/posts/goodnessazike_join-in-httpslnkdinehkg4-vx-share-7501586771512586241-KDEC/',
