@@ -33,8 +33,7 @@ export const site = {
   // Season titles, shown on the Episodes page
   seasons: { 1: 'Understanding S3' } as Record<number, string>,
 
-  // The Home page clock counts down to your next episode.
-  // TODO: set the weekday (0 = Sunday, 1 = Monday ... 6 = Saturday)
-  // and hour (0-23, the visitor's local time) your new episodes go out.
-  nextEpisode: { weekday: 1, hour: 9 },
+  // The Home page clock counts down to your next episode: every Monday at 9am UK time.
+  // weekday: 0 = Sunday, 1 = Monday ... 6 = Saturday. hour: 0-23 in the time zone below.
+  nextEpisode: { weekday: 1, hour: 9, timeZone: 'Europe/London' },
 };

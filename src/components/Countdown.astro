@@ -5,7 +5,7 @@ import { site } from '../data/site';
 
 interface Props { nextLabel: string }
 const { nextLabel } = Astro.props;
-const { weekday, hour } = site.nextEpisode;
+const { weekday, hour, timeZone } = site.nextEpisode;
 
 const groups = [
   { key: 'd', label: 'days' },
@@ -15,7 +15,7 @@ const groups = [
 ];
 const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 ---
-<section class="clock" aria-labelledby="clock-title" data-weekday={weekday} data-hour={hour}>
+<section class="clock" aria-labelledby="clock-title" data-weekday={weekday} data-hour={hour} data-tz={timeZone}>
   <div class="clock-head">
     <h2 id="clock-title">Next episode in</h2>
     <p>{nextLabel}</p>
@@ -59,13 +59,27 @@ const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
     const hour = Number(clock.dataset.hour);
     const spoken = clock.querySelector<HTMLElement>('[data-spoken]')!;
 
+    const tz = clock.dataset.tz || 'Europe/London';
+
+    // How far ahead of UTC the clock's time zone is at a given moment (handles GMT/BST)
+    const fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone: tz, hourCycle: 'h23',
+      year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit',
+    });
+    const offset = (d: Date) => {
+      const p = Object.fromEntries(fmt.formatToParts(d).map((x) => [x.type, x.value]));
+      return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - Math.floor(d.getTime() / 1000) * 1000;
+    };
+
+    // The next <weekday> at <hour>:00 in the clock's time zone, as a real moment
     const nextTarget = (now: Date) => {
-      const t = new Date(now);
-      t.setHours(hour, 0, 0, 0);
-      let add = (weekday - now.getDay() + 7) % 7;
-      if (add === 0 && t <= now) add = 7;
-      t.setDate(t.getDate() + add);
-      return t;
+      const wall = new Date(now.getTime() + offset(now)); // its UTC fields read as local wall time
+      let add = (weekday - wall.getUTCDay() + 7) % 7;
+      const at = (days: number) => Date.UTC(wall.getUTCFullYear(), wall.getUTCMonth(), wall.getUTCDate() + days, hour);
+      if (add === 0 && at(0) <= wall.getTime()) add = 7;
+      const targetWall = at(add);
+      const guess = targetWall - offset(now);
+      return new Date(targetWall - offset(new Date(guess)));
     };
 
     const paint = (key: string, value: number) => {
