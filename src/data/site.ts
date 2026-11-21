@@ -17,7 +17,11 @@ export const site = {
   // About page "Outside work" section. One line each.
   // A line can also be { text: '...', link: 'https://...', linkText: '...' } to add a link under it.
   outsideWork: [
-    'Wrote DO IT MATHEMATICS, a maths book for children aged 7 to 10.',
+    {
+      text: 'Wrote DO IT MATHEMATICS, a maths book for children aged 7 to 10.',
+      link: '/books/do-it-yourself-mathematics.pdf',
+      linkText: 'Read the book',
+    },
     {
       text: 'London Chapter Lead for Teens in AI, where I have run hackathons and mentored young technologists.',
       link: 'https://www.linkedin.com/posts/goodnessazike_co-healthyhabits-pathpilot-ugcPost-7436434874791665664-iRhr/',
