@@ -18,9 +18,9 @@ export const site = {
   // A line can also be { text: '...', link: 'https://...', linkText: '...' } to add a link under it.
   outsideWork: [
     {
-      text: 'Wrote DO IT MATHEMATICS, a maths book for children aged 7 to 10.',
+      text: 'Wrote DO IT YOURSELF MATHEMATICS, a maths series for primary school children (Basic Four, and Basic Five and Six).',
       link: '/books/do-it-yourself-mathematics.pdf',
-      linkText: 'Read the book',
+      linkText: 'Read Basic Five and Six',
     },
     {
       text: 'London Chapter Lead for Teens in AI, where I have run hackathons and mentored young technologists.',
