@@ -1,5 +1,6 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection, getEntry, render } from 'astro:content';
+import Placeholder from '../components/Placeholder.astro';
 import Base from '../layouts/Base.astro';
 import { site } from '../data/site';
 
@@ -7,8 +8,15 @@ const episodes = (await getCollection('episodes')).sort(
   (a, b) => b.data.season - a.data.season || b.data.episode - a.data.episode,
 );
 const rendered = await Promise.all(
-  episodes.map(async (ep) => ({ ep, Content: (await render(ep)).Content })),
+  episodes.map(async (ep) => ({
+    ep,
+    Content: (await render(ep)).Content,
+    // the Mission File this episode produced, and the book idea that shaped it
+    mission: ep.data.missionFile ? await getEntry(ep.data.missionFile) : undefined,
+    book: ep.data.book ? await getEntry(ep.data.book) : undefined,
+  })),
 );
+const books = (await getCollection('books')).sort((a, b) => a.data.order - b.data.order);
 // Every season that has episodes or is listed in site.ts, newest first.
 // A listed season with no episodes yet is "coming soon".
 const seasonNumbers = [...new Set([
@@ -90,7 +98,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
         </div>
       ) : (
       <ol class="log" reversed>
-        {season.items.map(({ ep, Content }) => (
+        {season.items.map(({ ep, Content, mission, book }) => (
           <li class:list={['entry', { newest: ep.id === newestId }]}>
             <div class="marker" aria-hidden="true"></div>
             <article>
@@ -109,6 +117,16 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
               </summary>
               <div class="ep-body">
               <div class="notes"><Content /></div>
+              {(mission || book) && (
+                <dl class="links">
+                  {mission && (!mission.data.sample || import.meta.env.DEV) && (
+                    <div><dt>Mission File</dt><dd><a href={`/mission-files/${mission.id}/`}>{mission.data.title}</a></dd></div>
+                  )}
+                  {book && (
+                    <div><dt>Book idea</dt><dd><a href="#bookshelf">{book.data.title}</a>{book.data.idea && <span class="book-idea">: {book.data.idea}</span>}</dd></div>
+                  )}
+                </dl>
+              )}
               <p class="cliff hand"><span class="cliff-label">Next time:</span> {ep.data.cliffhanger}</p>
               <div class="actions">
                 <button
@@ -137,6 +155,30 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
     </section>
   ))}
   {episodes.length === 0 && <p>No episodes yet. Add a Markdown file to src/content/episodes/ to start Season 1.</p>}
+
+  {books.length > 0 && (
+    <section class="bookshelf" id="bookshelf" aria-labelledby="bookshelf-title">
+      <h2 id="bookshelf-title">Bookshelf</h2>
+      <p class="shelf-intro">The books behind the diagrams.</p>
+      <ul class="shelf">
+        {books.map((b, i) => (
+          <li class="book" style={`--tilt: ${[-1.5, 1, -0.5, 1.5][i % 4]}deg`}>
+            <span class="spine" aria-hidden="true"></span>
+            <div class="book-text">
+              <p class="b-title">{b.data.title}</p>
+              <p class="b-author">{b.data.author}</p>
+              {(b.data.idea || import.meta.env.DEV) && (
+                <p class="b-idea">
+                  <span class="b-idea-label">Idea that shaped my diagram this week:</span>{' '}
+                  {b.data.idea ? b.data.idea : <Placeholder>one line, in your own words</Placeholder>}
+                </p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
 </Base>
 
 <script>
@@ -250,6 +292,38 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
 <style>
   .season-block + .season-block { margin-top: clamp(24px, 4vw, 40px); }
   .season-block[hidden] { display: none; }
+
+  /* links from an episode to its Mission File and book */
+  .links { margin: 0; display: grid; gap: 6px; font-size: 1rem; }
+  .links div { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+  .links dt { font-family: var(--font-hand); font-weight: 700; color: var(--redline); }
+  .links dd { margin: 0; }
+  .links a { color: var(--paper); }
+  .book-idea { color: var(--muted); }
+
+  /* bookshelf */
+  .bookshelf { margin-top: clamp(64px, 10vw, 112px); display: grid; gap: 16px; scroll-margin-top: 24px; }
+  .shelf-intro { color: var(--muted); }
+  .shelf {
+    list-style: none; margin: 12px 0 0; padding: 0 0 18px;
+    display: grid; gap: 22px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    border-bottom: 10px solid #3a2a1c; /* the shelf */
+    box-shadow: 0 14px 0 -4px rgba(0, 0, 0, 0.35);
+  }
+  .book {
+    display: grid; grid-template-columns: 18px 1fr;
+    background: #f2ead8; color: #1f2328;
+    min-height: 120px;
+    transform: rotate(var(--tilt));
+    box-shadow: 4px 6px 0 rgba(0, 0, 0, 0.3);
+  }
+  .spine { background: linear-gradient(90deg, #8f2f24, #b23b2e 60%, #8f2f24); }
+  .book-text { padding: 18px 18px 20px; display: grid; gap: 6px; align-content: start; }
+  .b-title { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; line-height: 1.05; }
+  .b-author { font-size: 0.9375rem; color: #5f6672; }
+  .b-idea { margin-top: 8px; font-size: 1rem; }
+  .b-idea-label { font-family: var(--font-hand); font-weight: 700; color: #b23b2e; }
+  .book :global(.ph) { color: #5f6672; border-color: #9aa0a6; }
 
   /* season progress + "Previously on" recap */
   .recap { display: grid; gap: 20px; margin-bottom: 36px; }

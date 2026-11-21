@@ -14,6 +14,15 @@ export const site = {
     'I got here from a customer-service desk at one of Nigeria\'s top banks, through Verification Analyst and Team Lead roles at Aiera, and an MSc in Data Science and AI at Leeds Trinity University (Distinction). That path taught me to trace every data problem back to the person it affects.',
     'The thread through all of it: the best systems, pipelines or classrooms, are designed for the people who were never meant to fit the default mold.',
   ],
+  // Home page "How I think" strip.
+  howIThink: {
+    line: 'I look at what produces a problem, not only what is in front of me.',
+    // A small example under the line. draft: true shows "DRAFT, edit me" while working locally.
+    example: {
+      steps: ['Add a lane to fix traffic', 'It attracts more drivers', 'Traffic returns'],
+      draft: true,
+    },
+  },
   // About page "Outside work" section. One line each.
   // A line can also be { text: '...', link: 'https://...', linkText: '...' } to add a link under it.
   outsideWork: [

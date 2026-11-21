@@ -1,4 +1,4 @@
-import { defineCollection } from 'astro:content';
+import { defineCollection, reference } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 
@@ -19,8 +19,36 @@ const missions = defineCollection({
     order: z.number().default(100),
     // true = shows a "sample, replace me" tag
     sample: z.boolean().default(false),
-    // Optional link to this Mission File's own page, e.g. /mission-files/scenario-2/
-    page: z.string().optional(),
+
+    // ── The three required headings. Every Mission File page has them, in this order. ──
+    // "What is causing this?": the problem, and what produces it, not just what is visible
+    cause: z.string().min(1, 'Every Mission File needs "What is causing this?" (the cause field)'),
+    // "How is it all connected?": a short note that goes with the diagram
+    connected: z.string().min(1, 'Every Mission File needs "How is it all connected?" (the connected field)'),
+    // "What ripples?": what happens to the whole system if one part changes,
+    // including second, third and fourth order effects. Blank line = new paragraph.
+    ripples: z.string().min(1, 'Every Mission File needs "What ripples?" (the ripples field)'),
+
+    // Which of the three are still drafts. Shows a "DRAFT, edit me" badge while you work
+    // locally (npm run dev). Remove a name from this list once you have rewritten it.
+    drafts: z.array(z.enum(['cause', 'connected', 'ripples'])).default([]),
+    // Optional: an animated diagram instead of the image (only 'scenario-2' exists so far)
+    diagram: z.enum(['scenario-2']).optional(),
+    // Optional quote at the bottom of the page
+    quote: z.object({ text: z.string(), source: z.string() }).optional(),
+  }),
+});
+
+// Bookshelf on the Episodes page. Add a book by adding a .md file to src/content/books/
+const books = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/books' }),
+  schema: z.object({
+    title: z.string(),
+    author: z.string(),
+    // One line: the idea that shaped my diagram this week. Leave '' until written.
+    idea: z.string().default(''),
+    // Lower numbers show first
+    order: z.number().default(100),
   }),
 });
 
@@ -39,6 +67,10 @@ const episodes = defineCollection({
     cliffhanger: z.string(),
     // Link to the Medium post. Leave empty until it is published.
     medium: z.string().default(''),
+    // Optional: the Mission File this episode produced (its file name, e.g. scenario-2)
+    missionFile: reference('missions').optional(),
+    // Optional: the book whose idea shaped it (its file name in src/content/books/)
+    book: reference('books').optional(),
     // Optional: your own recording of this episode, e.g. /audio/s01e05.m4a (file in public/audio/).
     // Without it, the Listen button reads the episode in the browser's voice.
     audio: z.string().optional(),
@@ -63,4 +95,4 @@ const projects = defineCollection({
   }),
 });
 
-export const collections = { missions, episodes, projects };
+export const collections = { missions, episodes, projects, books };

@@ -1,0 +1,15 @@
+---
+// "DRAFT, edit me" badge. Only shows while working locally (npm run dev), never on the live site.
+const show = import.meta.env.DEV;
+---
+{show && <span class="draft-mark">DRAFT, edit me</span>}
+
+<style>
+  .draft-mark {
+    display: inline-block; vertical-align: middle;
+    margin-left: 10px; padding: 1px 8px;
+    border: 2px dashed var(--redline); color: var(--redline);
+    font-family: var(--font-hand); font-weight: 700; font-size: 0.9375rem; line-height: 1.4;
+    transform: rotate(-2deg);
+  }
+</style>

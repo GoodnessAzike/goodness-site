@@ -1,0 +1,98 @@
+---
+// The Mission File template. Every Mission File page has the same three headings, in this order:
+// What is causing this? / How is it all connected? / What ripples?
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import DraftMark from '../../components/DraftMark.astro';
+import Scenario2Diagram from '../../components/Scenario2Diagram.astro';
+
+export async function getStaticPaths() {
+  // sample files never get a page on the live site
+  const files = await getCollection('missions', ({ data }) => import.meta.env.DEV || !data.sample);
+  return files.map((file) => ({ params: { id: file.id }, props: { file } }));
+}
+
+const { file } = Astro.props;
+const { title, image, alt, whatThisShows, cause, connected, ripples, drafts, diagram, quote } = file.data;
+const isDraft = (k: 'cause' | 'connected' | 'ripples') => drafts.includes(k);
+const paras = (t: string) => t.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+
+// The episode that produced this Mission File, if any
+const fromEpisode = (await getCollection('episodes')).find((ep) => ep.data.missionFile?.id === file.id);
+---
+<Base title={title} description={whatThisShows}>
+  <a class="back" href="/mission-files/">All Mission Files</a>
+
+  <header class="page-head">
+    <h1>{title}</h1>
+    <p>{whatThisShows}</p>
+    {fromEpisode && (
+      <p class="from">From <a href={`/episodes/#season-${fromEpisode.data.season}`}>Season {fromEpisode.data.season}, Episode {fromEpisode.data.episode}: {fromEpisode.data.title}</a></p>
+    )}
+  </header>
+
+  <ol class="parts">
+    <li class="part">
+      <h2><span class="n">1</span>What is causing this?{isDraft('cause') && <DraftMark />}</h2>
+      <div class="text">{paras(cause).map((p) => <p>{p}</p>)}</div>
+    </li>
+
+    <li class="part">
+      <h2><span class="n">2</span>How is it all connected?{isDraft('connected') && <DraftMark />}</h2>
+      <div class="text">{paras(connected).map((p) => <p>{p}</p>)}</div>
+      <div class="diagram">
+        {diagram === 'scenario-2' ? <Scenario2Diagram /> : <img src={image} alt={alt} />}
+      </div>
+    </li>
+
+    <li class="part ripples">
+      <h2><span class="n">3</span>What ripples?{isDraft('ripples') && <DraftMark />}</h2>
+      <div class="rings" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="text">{paras(ripples).map((p) => <p>{p}</p>)}</div>
+    </li>
+  </ol>
+
+  {quote && (
+    <blockquote class="quote">
+      <p>"{quote.text}"</p>
+      <footer>Source: {quote.source}</footer>
+    </blockquote>
+  )}
+</Base>
+
+<style>
+  .back { display: inline-block; margin-bottom: 28px; color: var(--muted); font-weight: 700; }
+  .page-head h1 { font-size: clamp(2.25rem, 6vw, 4.5rem); max-width: 18ch; }
+  .from { font-size: 1rem; }
+  .from a { color: var(--paper); }
+
+  .parts { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(40px, 6vw, 64px); }
+  .part { display: grid; gap: 16px; position: relative; }
+  .part h2 { font-size: clamp(1.75rem, 4vw, 2.5rem); display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; }
+  .n {
+    display: inline-grid; place-items: center;
+    width: 1.4em; height: 1.4em; border: 2px solid var(--signal); border-radius: 50%;
+    color: var(--signal); font-size: 0.7em;
+  }
+  .text { display: grid; gap: 12px; max-width: var(--measure); font-size: 1.125rem; }
+  .diagram { margin-top: 8px; }
+  .diagram img { width: 100%; height: auto; border: 1px solid var(--line); }
+
+  /* "What ripples?" gets rings spreading out, like a stone dropped in water */
+  .ripples { padding-left: 0; }
+  .rings { position: absolute; right: 0; top: -10px; width: 120px; height: 120px; pointer-events: none; }
+  .rings i { position: absolute; inset: 0; margin: auto; border: 2px solid var(--line); border-radius: 50%; opacity: 0; animation: ring 3.6s ease-out infinite; }
+  .rings i:nth-child(2) { animation-delay: 1.2s; }
+  .rings i:nth-child(3) { animation-delay: 2.4s; }
+  @keyframes ring { from { transform: scale(0.15); opacity: 0.9; } to { transform: scale(1); opacity: 0; } }
+  @media (max-width: 640px) { .rings { width: 80px; height: 80px; top: -6px; } }
+
+  .quote {
+    margin: clamp(48px, 7vw, 72px) 0 0;
+    padding: 4px 0 4px 20px;
+    border-left: 3px solid var(--line);
+    display: grid; gap: 8px;
+  }
+  .quote p { font-size: 1.1875rem; font-style: italic; }
+  .quote footer { color: var(--muted); font-size: 1rem; }
+</style>

@@ -1,0 +1,61 @@
+---
+// Home page "How I think": one line, and a small loop example drawn underneath.
+import { site } from '../data/site';
+import DraftMark from './DraftMark.astro';
+
+const { line, example } = site.howIThink;
+const steps = example.steps;
+---
+<section class="think" aria-labelledby="think-title">
+  <h2 id="think-title" class="visually-hidden">How I think</h2>
+  <p class="label">How I think</p>
+  <p class="line">{line}</p>
+
+  <figure class="loop">
+    <ol class="steps">
+      {steps.map((s, i) => (
+        <li class="step"><span class="box">{s}</span>{i < steps.length - 1 && <span class="arrow" aria-hidden="true">→</span>}</li>
+      ))}
+    </ol>
+    <svg class="back" viewBox="0 0 600 40" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M560 4 C 560 34, 40 34, 40 6" />
+      <path d="M30 16 L40 4 L51 15" />
+    </svg>
+    <figcaption class="visually-hidden">{steps.join(', then ')}, and the loop starts again.</figcaption>
+    {example.draft && <DraftMark />}
+  </figure>
+</section>
+
+<style>
+  .think {
+    margin: 0 0 clamp(48px, 8vw, 80px);
+    padding: clamp(24px, 4vw, 36px) 0;
+    border-block: 1px solid var(--line);
+    display: grid; gap: 14px;
+  }
+  .label { font-family: var(--font-hand); font-weight: 700; color: var(--redline); font-size: 1.125rem; transform: rotate(-1.5deg); transform-origin: left; }
+  .line { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.75rem, 4.4vw, 3rem); line-height: 1.02; max-width: 24ch; }
+
+  .loop { margin: 10px 0 0; position: relative; max-width: 720px; }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .step { display: flex; align-items: center; gap: 10px; }
+  .box {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1.5px solid var(--paper);
+    font-family: var(--font-hand); font-weight: 700; font-size: 1.0625rem; line-height: 1.25; text-align: center;
+  }
+  .step:nth-child(1) .box { transform: rotate(-1deg); }
+  .step:nth-child(3) .box { transform: rotate(1deg); }
+  .arrow { color: var(--paper); font-size: 1.25rem; }
+  .back { display: block; width: 100%; height: 34px; margin-top: 4px; }
+  .back path { fill: none; stroke: var(--redline); stroke-width: 2.2; stroke-dasharray: 7 6; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+  .loop :global(.draft-mark) { margin: 8px 0 0; }
+
+  @media (max-width: 560px) {
+    .steps { grid-template-columns: 1fr; }
+    .step { flex-direction: column; align-items: stretch; }
+    .arrow { transform: rotate(90deg); align-self: center; }
+    .back { display: none; }
+  }
+</style>

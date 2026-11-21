@@ -27,10 +27,20 @@ Sample entries have `sample: true` and show a "Sample, replace me" tag. Delete t
 
 ### Add a Mission File
 
-1. Put your diagram in `public/diagrams/`, e.g. `my-pipeline.png`.
-2. Copy any file in `src/content/missions/` and rename it.
-3. Change `title`, `image` (e.g. `/diagrams/my-pipeline.png`), `alt`, and `whatThisShows`.
-4. Set `featured: true` to show it on the Home page (keep it to 3).
+Every Mission File page has three headings, in this order, and the build stops if one is missing:
+
+1. **What is causing this?** (`cause`): the problem, and what produces it, not just what is visible
+2. **How is it all connected?** (`connected`): a short note that goes with the diagram
+3. **What ripples?** (`ripples`): what happens to the whole system if one part changes,
+   including second, third and fourth order effects (a blank line starts a new paragraph)
+
+Steps:
+1. Put your diagram in `public/diagrams/`.
+2. Copy `src/content/missions/scenario-2.md` and rename it (the file name becomes the page address).
+3. Fill in `title`, `image`, `alt`, `whatThisShows`, `cause`, `connected` and `ripples`.
+4. `drafts: [cause, connected, ripples]` shows a "DRAFT, edit me" badge on those headings while you
+   work locally. Remove each name once you have rewritten it in your own words.
+5. Set `featured: true` to show it on the Home page.
 
 ### Add an Episode
 
@@ -47,6 +57,17 @@ Each series is a season (Season 1 is Understanding S3). To start Season 2:
 
 The Episodes page groups episodes by season, newest first. When a season's last episode is out,
 the Home clock moves on to the next season's Episode 1.
+
+### Link an Episode to its Mission File and book
+
+In an episode file, add `missionFile: scenario-2` (the Mission File's file name) and/or
+`book: thinking-in-systems` (the book's file name in `src/content/books/`).
+The episode then shows both links, and the Mission File page links back to the episode.
+
+### Add a book to the Bookshelf
+
+Add a file to `src/content/books/` with `title`, `author` and `idea` (one line: the idea that
+shaped your diagram this week). An empty `idea` is hidden on the live site.
 
 ### Add a Project
 

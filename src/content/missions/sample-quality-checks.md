@@ -6,4 +6,8 @@ whatThisShows: "Placeholder: in one or two plain sentences, say what this diagra
 featured: true
 order: 2
 sample: true
+cause: "Placeholder: what is causing this?"
+connected: "Placeholder: how is it all connected?"
+ripples: "Placeholder: what ripples?"
+drafts: [cause, connected, ripples]
 ---

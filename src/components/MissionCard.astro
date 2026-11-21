@@ -3,7 +3,9 @@
 import type { CollectionEntry } from 'astro:content';
 interface Props { file: CollectionEntry<'missions'>; headingLevel?: 'h2' | 'h3' }
 const { file, headingLevel = 'h3' } = Astro.props;
-const { title, image, alt, whatThisShows, sample, page } = file.data;
+const { title, image, alt, whatThisShows, sample } = file.data;
+// every Mission File has its own page now
+const page = `/mission-files/${file.id}/`;
 const Heading = headingLevel;
 ---
 <article class="sheet">
@@ -18,7 +20,7 @@ const Heading = headingLevel;
     <div class="tb-note">
       <p class="tb-label hand">What this shows</p>
       <p>{whatThisShows}</p>
-      {page && <a class="watch" href={page}>Watch it run</a>}
+      <a class="watch" href={page}>Open the file</a>
     </div>
   </div>
 </article>
