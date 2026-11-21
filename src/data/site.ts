@@ -1,7 +1,7 @@
 // Your details. Anything left as '' shows up on the site as a marked placeholder.
 export const site = {
   name: 'Goodness',
-  tagline: 'Data engineer, growing in public.',
+  tagline: 'Data engineer who loves to draw workflows.',
   // Two short lines for the Home page intro
   intro: [
     'One thing about me: I am in my era of spotting patterns by trial and error, clocking the pattern, and writing it down.',
