@@ -12,7 +12,7 @@ export const site = {
     '', // TODO: bio paragraph
   ],
   linkedin: '', // TODO: e.g. https://www.linkedin.com/in/your-handle
-  email: '', // TODO: e.g. you@example.com
+  email: 'goodnessazike@gmail.com',
   medium: '', // TODO: your Medium profile link
   github: '', // TODO: your GitHub profile link
   // Your CV lives at public/cv.pdf. Replace that file with your real CV.
