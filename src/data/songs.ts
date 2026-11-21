@@ -24,4 +24,10 @@ export const themeSongs: Stage[] = [
       { artist: 'Dido', song: 'Thank You', url: 'https://open.spotify.com/track/3yUcJwYu7fXAfqMj9krY6l', note: '' }, // TODO: one-line note
     ],
   },
+  {
+    stage: 'Now',
+    songs: [
+      { artist: 'RAYE', song: 'Click Clack Symphony. (feat. Hans Zimmer)', url: 'https://open.spotify.com/track/5PspYmmQ8nKESNTcBY2LlX', note: '' }, // TODO: one-line note
+    ],
+  },
 ];
