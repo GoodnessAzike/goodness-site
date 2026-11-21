@@ -16,7 +16,7 @@ const Heading = headingLevel;
       {sample && <span class="sample-tag">Sample, replace me</span>}
     </div>
     <div class="tb-note">
-      <p class="tb-label">What this shows</p>
+      <p class="tb-label hand">What this shows</p>
       <p>{whatThisShows}</p>
     </div>
   </div>
@@ -42,5 +42,5 @@ const Heading = headingLevel;
     justify-items: start;
   }
   .tb-note { padding: 14px 18px 18px; display: grid; gap: 4px; align-content: start; font-size: 1rem; }
-  .tb-label { color: var(--muted); font-size: 0.875rem; font-weight: 700; }
+  .tb-label { font-size: 1.125rem; font-weight: 700; transform: rotate(-1.5deg); transform-origin: left; }
 </style>

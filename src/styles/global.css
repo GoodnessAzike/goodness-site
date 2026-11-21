@@ -8,11 +8,13 @@
   --muted: #93a9c2;      /* secondary text */
   --signal: #f2b33d;     /* countdown amber: clock + "next time" only */
   --signal-ghost: rgba(242, 179, 61, 0.09);
+  --redline: #ff6b5b;    /* red pen: hand-written notes on the blueprint */
   --grid-minor: rgba(120, 165, 215, 0.06);
   --grid-major: rgba(120, 165, 215, 0.11);
 
   --font-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
   --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-hand: 'Kalam', 'Comic Sans MS', cursive;
 
   --measure: 68ch;
   --gutter: clamp(16px, 4vw, 40px);
@@ -92,6 +94,13 @@ main { flex: 1; padding-block: clamp(40px, 8vw, 88px) clamp(56px, 10vw, 120px); 
   text-decoration: none;
 }
 .button:hover { background: var(--paper); color: var(--ink); }
+
+/* Red-pen note, as if written on the drawing by hand */
+.hand {
+  font-family: var(--font-hand);
+  color: var(--redline);
+  line-height: 1.35;
+}
 
 /* Clearly marked placeholder for content Goodness still has to write */
 .ph {

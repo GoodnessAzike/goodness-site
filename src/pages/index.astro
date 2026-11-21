@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import Countdown from '../components/Countdown.astro';
 import MissionCard from '../components/MissionCard.astro';
 import Placeholder from '../components/Placeholder.astro';
+import HowILearn from '../components/HowILearn.astro';
 import { site } from '../data/site';
 
 const featured = (await getCollection('missions', ({ data }) => data.featured))
@@ -21,10 +22,13 @@ const nextLabel = latest
 <Base>
   <section class="hero">
     <h1>{site.tagline.split(/(?<=,)\s+/).map((part) => <span>{part}</span>)}</h1>
-    <div class="intro">
-      {site.intro.map((line, i) =>
-        line ? <p>{line}</p> : <p><Placeholder>intro line {i + 1}</Placeholder></p>,
-      )}
+    <div class="hero-row">
+      <div class="intro">
+        {site.intro.map((line, i) =>
+          line ? <p>{line}</p> : <p><Placeholder>intro line {i + 1}</Placeholder></p>,
+        )}
+      </div>
+      <HowILearn />
     </div>
   </section>
 
@@ -46,9 +50,16 @@ const nextLabel = latest
 
 <style>
   .hero { display: grid; gap: clamp(20px, 3vw, 32px); margin-bottom: clamp(40px, 7vw, 72px); }
-  .hero h1 { text-wrap: balance; max-width: 16ch; }
+  .hero h1 { text-wrap: balance; max-width: 18ch; }
   .hero h1 span { display: block; }
-  .intro { display: grid; gap: 8px; font-size: clamp(1.125rem, 2vw, 1.3125rem); }
+  .hero-row {
+    display: grid;
+    gap: 32px clamp(32px, 5vw, 64px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    align-items: center;
+  }
+  @media (max-width: 820px) { .hero-row { grid-template-columns: 1fr; } }
+  .intro { display: grid; gap: 12px; align-content: start; font-size: clamp(1.125rem, 2vw, 1.3125rem); }
 
   .featured { margin-top: clamp(56px, 9vw, 96px); }
   .featured-head {

@@ -28,7 +28,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
             {ep.data.sample && <span class="sample-tag">Sample, replace me</span>}
           </p>
           <div class="notes"><Content /></div>
-          <p class="cliff"><span class="cliff-label">Next time:</span> {ep.data.cliffhanger}</p>
+          <p class="cliff hand"><span class="cliff-label">Next time:</span> {ep.data.cliffhanger}</p>
           {ep.data.medium
             ? <a class="button" href={ep.data.medium} target="_blank" rel="noopener">Read this episode on Medium</a>
             : <span class="ph">Placeholder: Medium link</span>}
@@ -66,9 +66,9 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
   .notes { max-width: var(--measure); }
   .notes :global(p + p) { margin-top: 0.8em; }
   .cliff {
-    border-left: 3px solid var(--signal);
-    padding: 4px 0 4px 14px;
-    font-style: italic;
+    border-left: 3px solid var(--redline);
+    padding: 2px 0 2px 14px;
+    font-size: 1.25rem;
   }
-  .cliff-label { color: var(--signal); font-style: normal; font-weight: 700; }
+  .cliff-label { font-weight: 700; }
 </style>

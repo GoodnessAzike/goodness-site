@@ -1,0 +1,64 @@
+---
+// Hand-drawn diagram of Goodness's own line: trial and error, clock the pattern, write it down.
+// It sketches itself once on page load. With reduced motion it simply appears.
+---
+<figure class="how">
+  <svg viewBox="0 0 560 330" role="img" aria-labelledby="how-title">
+    <title id="how-title">Hand-drawn workflow: trial and error, then clock the pattern, then write it down. A red loop says try again.</title>
+
+    <g class="ink">
+      <path class="draw s1" d="M22 44 L216 38 L221 119 L18 123 Z" />
+      <text class="lbl s1t" x="120" y="88">trial and error</text>
+
+      <path class="draw s2" d="M224 82 C 256 70, 292 94, 324 80" />
+      <path class="draw s2" d="M310 71 L326 80 L311 91" />
+
+      <path class="draw s3" d="M332 40 L538 44 L535 121 L329 117 Z" />
+      <text class="lbl s3t" x="434" y="88">clock the pattern</text>
+
+      <path class="draw s4" d="M436 123 C 428 152, 444 180, 435 206" />
+      <path class="draw s4" d="M425 194 L435 208 L445 193" />
+
+      <path class="draw s5" d="M330 212 L536 209 L539 290 L333 294 Z" />
+      <text class="lbl s5t" x="436" y="258">write it down</text>
+    </g>
+
+    <g class="red">
+      <path class="draw s6" d="M96 125 C 92 196, 6 196, 12 128" />
+      <path class="draw s6" d="M3 140 L12 126 L22 139" />
+      <text class="note s6t" x="64" y="214">try again</text>
+
+      <path class="draw s7" d="M206 270 C 250 262, 288 268, 322 254" />
+      <path class="draw s7" d="M308 250 L323 254 L313 266" />
+      <text class="note s7t" x="40" y="280">how I learn</text>
+    </g>
+  </svg>
+</figure>
+
+<style>
+  .how { margin: 0; }
+  svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+  .draw { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1000; stroke-dashoffset: 0; }
+  .ink .draw { stroke: var(--paper); }
+  .red .draw { stroke: var(--redline); }
+
+  .lbl { font-family: var(--font-hand); font-size: 25px; fill: var(--paper); text-anchor: middle; }
+  .note { font-family: var(--font-hand); font-size: 28px; font-weight: 700; fill: var(--redline); }
+  .s6t { transform: rotate(-4deg); transform-origin: 64px 214px; }
+  .s7t { transform: rotate(-3deg); transform-origin: 40px 280px; }
+
+  /* One orchestrated moment: the diagram sketches itself in order */
+  .draw { animation: sketch 0.7s ease-out both; }
+  .lbl, .note { animation: ink 0.5s ease-out both; }
+  .s1 { animation-delay: 0.3s; }  .s1t { animation-delay: 0.8s; }
+  .s2 { animation-delay: 1.1s; }
+  .s3 { animation-delay: 1.5s; }  .s3t { animation-delay: 2.0s; }
+  .s4 { animation-delay: 2.3s; }
+  .s5 { animation-delay: 2.7s; }  .s5t { animation-delay: 3.2s; }
+  .s6 { animation-delay: 3.6s; }  .s6t { animation-delay: 4.0s; }
+  .s7 { animation-delay: 4.3s; }  .s7t { animation-delay: 4.7s; }
+
+  @keyframes sketch { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+  @keyframes ink { from { opacity: 0; } to { opacity: 1; } }
+</style>
