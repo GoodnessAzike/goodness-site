@@ -23,6 +23,18 @@ export const site = {
   ],
   // Shown under the Outside work list
   aim: 'My larger aim is an AI learning tool with a human in the loop, built for neurodivergent and non-linear learners.',
+  // About page talk: your voice with photos that change as you speak.
+  // audio: put the file in public/talk/ and write its path, e.g. '/talk/about-me.m4a'
+  // slides: one per photo, in order. `at` is the second the photo appears.
+  // transcript: what you say, written out, for people who cannot listen.
+  talk: {
+    audio: '', // TODO: your recording
+    slides: [
+      // { src: '/talk/1-me.jpg', alt: 'Me at my desk', at: 0 },
+      // { src: '/talk/2-diagram.jpg', alt: 'One of my pipeline drawings', at: 12 },
+    ] as { src: string; alt: string; at: number }[],
+    transcript: '', // TODO: what you say in the recording
+  },
   linkedin: 'https://www.linkedin.com/in/goodnessazike/',
   email: 'goodnessazike@gmail.com',
   medium: '', // TODO: your Medium profile link

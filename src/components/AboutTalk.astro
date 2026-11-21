@@ -1,0 +1,127 @@
+---
+// About page talk: Goodness's own recording, with photos that change as she speaks.
+// Everything comes from `talk` in src/data/site.ts. Until the audio is added, a placeholder shows.
+import { site } from '../data/site';
+import Placeholder from './Placeholder.astro';
+
+const { audio, slides, transcript } = site.talk;
+const ready = Boolean(audio) && slides.length > 0;
+---
+<section class="talk" aria-labelledby="talk-title">
+  <h2 id="talk-title">In my own voice</h2>
+
+  {ready ? (
+    <figure class="player" data-talk>
+      <div class="stage">
+        {slides.map((s, i) => (
+          <img class:list={['slide', { on: i === 0 }]} src={s.src} alt={s.alt} data-at={s.at} loading={i === 0 ? 'eager' : 'lazy'} />
+        ))}
+        <button type="button" class="big-play" data-play aria-label="Play">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+        </button>
+      </div>
+      <div class="bar">
+        <button type="button" class="ctl" data-toggle>Play</button>
+        <input type="range" min="0" max="100" step="0.1" value="0" aria-label="Position" data-seek />
+        <span class="time" data-time>0:00</span>
+      </div>
+      <audio src={audio} preload="metadata" data-audio></audio>
+      {transcript && (
+        <details class="transcript">
+          <summary>Read the transcript</summary>
+          {transcript.split(/\n\s*\n/).map((p) => <p>{p}</p>)}
+        </details>
+      )}
+    </figure>
+  ) : (
+    <div class="empty">
+      <Placeholder block>your voice recording (about 60 to 90 seconds) and 4 to 8 photos of you and your work. Add them in src/data/site.ts under talk.</Placeholder>
+    </div>
+  )}
+</section>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-talk]');
+  if (root) {
+    const audio = root.querySelector<HTMLAudioElement>('[data-audio]')!;
+    const slides = Array.from(root.querySelectorAll<HTMLImageElement>('.slide'));
+    const toggle = root.querySelector<HTMLButtonElement>('[data-toggle]')!;
+    const big = root.querySelector<HTMLButtonElement>('[data-play]')!;
+    const seek = root.querySelector<HTMLInputElement>('[data-seek]')!;
+    const time = root.querySelector<HTMLElement>('[data-time]')!;
+    const fmt = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+
+    const show = (t: number) => {
+      let idx = 0;
+      slides.forEach((s, i) => { if (t >= Number(s.dataset.at)) idx = i; });
+      slides.forEach((s, i) => s.classList.toggle('on', i === idx));
+    };
+    const sync = () => {
+      const playing = !audio.paused;
+      root.classList.toggle('playing', playing);
+      toggle.textContent = playing ? 'Pause' : 'Play';
+      big.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+    };
+
+    const flip = () => (audio.paused ? audio.play() : audio.pause());
+    toggle.addEventListener('click', flip);
+    big.addEventListener('click', flip);
+    audio.addEventListener('play', sync);
+    audio.addEventListener('pause', sync);
+    audio.addEventListener('ended', () => { sync(); });
+    audio.addEventListener('timeupdate', () => {
+      show(audio.currentTime);
+      if (audio.duration) seek.value = String((audio.currentTime / audio.duration) * 100);
+      time.textContent = `${fmt(audio.currentTime)}${audio.duration ? ` / ${fmt(audio.duration)}` : ''}`;
+    });
+    audio.addEventListener('loadedmetadata', () => { time.textContent = `0:00 / ${fmt(audio.duration)}`; });
+    seek.addEventListener('input', () => {
+      if (audio.duration) { audio.currentTime = (Number(seek.value) / 100) * audio.duration; show(audio.currentTime); }
+    });
+  }
+</script>
+
+<style>
+  .talk { margin-top: clamp(64px, 10vw, 112px); display: grid; gap: 20px; }
+  .player { margin: 0; display: grid; gap: 0; max-width: 760px; }
+  .stage {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--ink-raised);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+  .slide {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; transition: opacity 0.8s ease;
+  }
+  .slide.on { opacity: 1; }
+  .big-play {
+    position: absolute; inset: 0; margin: auto;
+    width: 84px; height: 84px; border-radius: 50%;
+    border: 2px solid var(--paper); background: rgba(10, 26, 47, 0.7); color: var(--paper);
+    display: grid; place-items: center; cursor: pointer;
+    transition: opacity 0.3s;
+  }
+  .big-play svg { width: 34px; height: 34px; fill: currentColor; margin-left: 4px; }
+  .playing .big-play { opacity: 0; }
+  .playing .big-play:focus-visible { opacity: 1; }
+
+  .bar {
+    display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+    border: 1px solid var(--line); border-top: 0; padding: 10px 14px;
+  }
+  .ctl {
+    min-height: 44px; min-width: 84px; padding: 8px 14px;
+    border: 1.5px solid var(--line); background: transparent; color: var(--paper);
+    font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
+  }
+  .ctl:hover { border-color: var(--paper); }
+  input[type='range'] { width: 100%; accent-color: var(--signal); }
+  .time { color: var(--muted); font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+
+  .transcript { margin-top: 14px; }
+  .transcript summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
+  .transcript p { margin-top: 10px; color: var(--paper); }
+</style>

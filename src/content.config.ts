@@ -39,6 +39,9 @@ const episodes = defineCollection({
     cliffhanger: z.string(),
     // Link to the Medium post. Leave empty until it is published.
     medium: z.string().default(''),
+    // Optional: your own recording of this episode, e.g. /audio/s01e05.m4a (file in public/audio/).
+    // Without it, the Listen button reads the episode in the browser's voice.
+    audio: z.string().optional(),
     sample: z.boolean().default(false),
   }),
 });

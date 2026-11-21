@@ -52,6 +52,18 @@ the Home clock moves on to the next season's Episode 1.
 
 Copy a file in `src/content/projects/`. Update `title`, `summary`, `stack`, and `github`.
 
+## Sound
+
+### Listen to an episode
+Every episode has a Listen button. It reads the episode in the browser's own voice.
+To use your own recording instead, put the file in `public/audio/` (e.g. `s01e05.m4a`)
+and add `audio: /audio/s01e05.m4a` to that episode's file. The button then says "Listen in my voice".
+
+### The About page talk
+1. Record yourself (60 to 90 seconds is plenty). An `.m4a` or `.mp3` from your phone is fine.
+2. Put the recording and 4 to 8 photos in `public/talk/`.
+3. In `src/data/site.ts`, fill in `talk`: the audio path, one line per photo with the second it should appear, and the transcript.
+
 ## Cloudflare Pages settings
 
 - Framework preset: Astro

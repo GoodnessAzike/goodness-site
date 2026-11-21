@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Placeholder from '../components/Placeholder.astro';
+import AboutTalk from '../components/AboutTalk.astro';
 import { site } from '../data/site';
 import { themeSongs } from '../data/songs';
 ---
@@ -32,6 +33,8 @@ import { themeSongs } from '../data/songs';
       <a class="button cv" href={site.cv} download>Download my CV (PDF)</a>
     </section>
   </div>
+
+  <AboutTalk />
 
   {site.outsideWork.length > 0 && (
     <section class="outside" aria-labelledby="outside-title">

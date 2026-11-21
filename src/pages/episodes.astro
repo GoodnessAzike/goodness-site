@@ -41,9 +41,23 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
               </p>
               <div class="notes"><Content /></div>
               <p class="cliff hand"><span class="cliff-label">Next time:</span> {ep.data.cliffhanger}</p>
-              {ep.data.medium
-                ? <a class="button" href={ep.data.medium} target="_blank" rel="noopener">Read this episode on Medium</a>
-                : <span class="ph">Placeholder: Medium link</span>}
+              <div class="actions">
+                <button
+                  type="button"
+                  class="listen"
+                  data-listen
+                  data-audio={ep.data.audio}
+                  data-say={[ep.data.title, ep.data.subtitle, ep.body, `Next time: ${ep.data.cliffhanger}`].filter(Boolean).join('. ').replace(/\.\./g, '.')}
+                  aria-pressed="false"
+                  hidden
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /></svg>
+                  <span data-listen-label>{ep.data.audio ? 'Listen in my voice' : 'Listen'}</span>
+                </button>
+                {ep.data.medium
+                  ? <a class="button" href={ep.data.medium} target="_blank" rel="noopener">Read this episode on Medium</a>
+                  : <span class="ph">Placeholder: Medium link</span>}
+              </div>
             </article>
           </li>
         ))}
@@ -52,6 +66,61 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
   ))}
   {episodes.length === 0 && <p>No episodes yet. Add a Markdown file to src/content/episodes/ to start Season 1.</p>}
 </Base>
+
+<script>
+  // Listen: plays the episode's own recording if it has one, otherwise reads it aloud
+  // with the browser's built-in voice. Only one episode plays at a time.
+  const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
+  const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-listen]'));
+  let current: { btn: HTMLButtonElement; stop: () => void } | null = null;
+
+  const setState = (btn: HTMLButtonElement, playing: boolean) => {
+    btn.setAttribute('aria-pressed', String(playing));
+    const label = btn.querySelector('[data-listen-label]')!;
+    const own = Boolean(btn.dataset.audio);
+    label.textContent = playing ? 'Stop' : own ? 'Listen in my voice' : 'Listen';
+  };
+
+  const pickVoice = () => {
+    const voices = synth?.getVoices() ?? [];
+    return voices.find((v) => v.lang === 'en-GB' && /female|serena|kate|sonia|libby|martha/i.test(v.name))
+      ?? voices.find((v) => v.lang === 'en-GB')
+      ?? voices.find((v) => v.lang.startsWith('en'));
+  };
+
+  buttons.forEach((btn) => {
+    if (!btn.dataset.audio && !synth) return; // no way to play: keep the button hidden
+    btn.hidden = false;
+
+    btn.addEventListener('click', () => {
+      const wasMe = current?.btn === btn;
+      current?.stop();
+      if (wasMe) return;
+
+      if (btn.dataset.audio) {
+        const audio = new Audio(btn.dataset.audio);
+        const stop = () => { audio.pause(); setState(btn, false); current = null; };
+        audio.addEventListener('ended', stop);
+        audio.play();
+        current = { btn, stop };
+      } else if (synth) {
+        const u = new SpeechSynthesisUtterance(btn.dataset.say || '');
+        const voice = pickVoice();
+        if (voice) { u.voice = voice; u.lang = voice.lang; }
+        u.rate = 0.98;
+        const stop = () => { synth.cancel(); setState(btn, false); current = null; };
+        u.onend = () => { if (current?.btn === btn) stop(); };
+        synth.cancel();
+        synth.speak(u);
+        current = { btn, stop };
+      }
+      setState(btn, true);
+    });
+  });
+
+  // Stop talking if the visitor leaves the page
+  window.addEventListener('pagehide', () => current?.stop());
+</script>
 
 <style>
   .season-block + .season-block { margin-top: clamp(24px, 4vw, 40px); }
@@ -89,4 +158,14 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
     font-size: 1.25rem;
   }
   .cliff-label { font-weight: 700; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .listen {
+    display: inline-flex; align-items: center; gap: 8px;
+    min-height: 48px; padding: 10px 18px;
+    border: 1.5px solid var(--line); background: transparent; color: var(--paper);
+    font: inherit; font-weight: 700; cursor: pointer;
+  }
+  .listen:hover { border-color: var(--paper); }
+  .listen svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .listen[aria-pressed='true'] { border-color: var(--signal); color: var(--signal); }
 </style>
