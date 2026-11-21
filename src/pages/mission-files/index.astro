@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
-import Base from '../layouts/Base.astro';
-import MissionCard from '../components/MissionCard.astro';
+import Base from '../../layouts/Base.astro';
+import MissionCard from '../../components/MissionCard.astro';
 
 const files = (await getCollection('missions')).sort((a, b) => a.data.order - b.data.order);
 ---

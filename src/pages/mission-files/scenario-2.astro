@@ -1,0 +1,33 @@
+---
+import Base from '../../layouts/Base.astro';
+import Scenario2Diagram from '../../components/Scenario2Diagram.astro';
+---
+<Base title="Scenario 2: Stripe to S3 with a 3-day lookback" description="An animated walk-through of a Stripe to S3 pipeline with versioning and a lifecycle rule.">
+  <a class="back" href="/mission-files/">All Mission Files</a>
+
+  <header class="page-head">
+    <h1>Scenario 2: Stripe to S3 with a 3-day lookback</h1>
+    <p>You are asked to design a pipeline that pulls payments from Stripe's API into raw/payments/ in shop-data-lake, with a 3-day lookback window to pick up refunds.</p>
+  </header>
+
+  <Scenario2Diagram />
+
+  <blockquote class="quote">
+    <p>"To determine the number of days an object is noncurrent, Amazon S3 looks at when its successor was created."</p>
+    <footer>Source: AWS</footer>
+  </blockquote>
+</Base>
+
+<style>
+  .back { display: inline-block; margin-bottom: 28px; color: var(--muted); font-weight: 700; }
+  .page-head h1 { font-size: clamp(2.25rem, 6vw, 4.5rem); max-width: 18ch; }
+  .quote {
+    margin: clamp(40px, 6vw, 64px) 0 0;
+    padding: 4px 0 4px 20px;
+    border-left: 3px solid var(--line);
+    display: grid;
+    gap: 8px;
+  }
+  .quote p { font-size: 1.1875rem; font-style: italic; }
+  .quote footer { color: var(--muted); font-size: 1rem; }
+</style>

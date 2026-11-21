@@ -19,6 +19,8 @@ const missions = defineCollection({
     order: z.number().default(100),
     // true = shows a "sample, replace me" tag
     sample: z.boolean().default(false),
+    // Optional link to this Mission File's own page, e.g. /mission-files/scenario-2/
+    page: z.string().optional(),
   }),
 });
 
