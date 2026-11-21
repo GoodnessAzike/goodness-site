@@ -2,11 +2,12 @@
 export const site = {
   name: 'Goodness',
   tagline: 'Data engineer who loves to draw workflows.',
-  // Two short lines for the Home page intro
+  // Short lines for the Home page intro
   intro: [
     'One thing about me: I am in my era of spotting patterns by trial and error, clocking the pattern, and writing it down.',
-    'Open to mid-level data engineering roles in the UK, Leeds or remote.',
   ],
+  // Shown in the "Get in touch" box on the About page
+  openTo: 'Open to mid-level data engineering roles in the UK, Leeds or remote.',
   // Short bio for the About page. One string per paragraph.
   bio: [
     'I am a Data Engineer at Aiera, a US financial data company, where I build and govern the data infrastructure behind financial intelligence: event-driven pipelines on AWS (Lambda, SQS, Terraform), data quality checks, and a catalog in OpenMetadata.',

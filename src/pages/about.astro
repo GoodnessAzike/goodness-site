@@ -16,6 +16,7 @@ import { themeSongs } from '../data/songs';
 
     <section class="contact" aria-labelledby="contact-title">
       <h2 id="contact-title">Get in touch</h2>
+      {site.openTo && <p class="open-to">{site.openTo}</p>}
       <ul>
         <li>
           {site.linkedin
@@ -88,6 +89,7 @@ import { themeSongs } from '../data/songs';
 
   .contact { border: 1px solid var(--line); background: var(--ink-raised); padding: 24px; display: grid; gap: 16px; justify-items: start; }
   .contact h2 { font-size: 1.75rem; font-weight: 700; }
+  .open-to { font-weight: 700; }
   .contact ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
   .contact a:not(.button) { overflow-wrap: anywhere; }
 
