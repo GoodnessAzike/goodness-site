@@ -7,20 +7,20 @@ export const themeSongs: Stage[] = [
   {
     stage: 'Childhood',
     songs: [
-      { artist: 'ABBA', song: '', url: '', note: '' }, // TODO: choose the song, add a Spotify or YouTube link
+      { artist: 'ABBA', song: 'Chiquitita', url: 'https://open.spotify.com/track/762B4bOcXF7I2Y8UlKTyTy', note: '' }, // TODO: one-line note
     ],
   },
   {
     stage: 'Teenage years',
     songs: [
-      { artist: 'Lorde', song: '', url: '', note: '' }, // TODO: choose the song, add a Spotify or YouTube link
+      { artist: 'Lorde', song: 'Royals', url: 'https://open.spotify.com/track/4SDWMFvYJKtK1QPhIOeZhd', note: '' }, // TODO: one-line note
     ],
   },
   {
     stage: 'Quiet favorites',
     songs: [
       { artist: 'Dido', song: 'Life for Rent', url: '', note: '' }, // TODO: link + one-line note
-      { artist: 'Dido', song: 'White Flag', url: '', note: '' }, // TODO: link + one-line note
+      { artist: 'Dido', song: 'White Flag', url: 'https://open.spotify.com/track/6si71supnBUhddjR2FJc2L', note: '' }, // TODO: one-line note
       { artist: 'Dido', song: 'Thank You', url: '', note: '' }, // TODO: link + one-line note
     ],
   },
