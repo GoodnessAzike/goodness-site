@@ -32,6 +32,8 @@ const episodes = defineCollection({
     season: z.number(),
     episode: z.number(),
     title: z.string(),
+    // Optional line shown under the title, e.g. "Part 1 of 6: ..."
+    subtitle: z.string().optional(),
     date: z.coerce.date(),
     // The "what I learn next" line
     cliffhanger: z.string(),
