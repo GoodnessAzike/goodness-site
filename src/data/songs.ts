@@ -31,3 +31,9 @@ export const themeSongs: Stage[] = [
     ],
   },
 ];
+
+// Favourite quote, shown at the end of Theme Songs
+export const favouriteQuote = {
+  text: 'The cold never lasts, my darling. It just teaches the heart how to burn.',
+  by: 'RAYE, Click Clack Symphony',
+};

@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import Placeholder from '../components/Placeholder.astro';
 import AboutTalk from '../components/AboutTalk.astro';
 import { site } from '../data/site';
-import { themeSongs } from '../data/songs';
+import { themeSongs, favouriteQuote } from '../data/songs';
 
 // On the live site, only show songs that have a title, and only stages that have songs
 const stages = themeSongs
@@ -83,6 +83,13 @@ const stages = themeSongs
         </li>
       ))}
     </ol>
+
+    {favouriteQuote.text && (
+      <figure class="fav">
+        <blockquote><p>{favouriteQuote.text}</p></blockquote>
+        <figcaption>{favouriteQuote.by}</figcaption>
+      </figure>
+    )}
   </section>
   )}
 </Base>
@@ -134,4 +141,16 @@ const stages = themeSongs
   .song-title { font-family: var(--font-display); font-weight: 700; font-size: 1.625rem; line-height: 1.1; }
   .artist { color: var(--muted); }
   .note { font-size: 1rem; }
+
+  .fav { margin: clamp(40px, 6vw, 64px) 0 0; display: grid; gap: 14px; }
+  .fav blockquote { margin: 0; }
+  .fav p {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.875rem, 5vw, 3rem);
+    line-height: 1.05;
+    max-width: 20ch;
+    text-wrap: balance;
+  }
+  .fav figcaption { color: var(--muted); }
 </style>
