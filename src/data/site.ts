@@ -20,11 +20,15 @@ export const site = {
     'Wrote DO IT MATHEMATICS, a maths book for children aged 7 to 10.',
     'London Chapter Lead for Teens in AI, where I have run hackathons and mentored young technologists.',
     {
-      text: 'Active in Women in Data.',
-      link: 'https://www.linkedin.com/posts/shubhangi-goyal-0ab69795_london-women-tech-ugcPost-7526374173137436673-63Ou/',
-      linkText: 'Women Shaping Tech, London',
+      text: 'Active in Women in Data, and spoke in the Women Shaping Tech series.',
+      link: 'https://www.linkedin.com/posts/goodnessazike_join-in-httpslnkdinehkg4-vx-share-7501586771512586241-KDEC/',
+      linkText: 'See the post',
     },
-    'Presented at the BCSWomen Lovelace Colloquium on non-linear learning journeys in computing.',
+    {
+      text: 'Presented at the BCSWomen Lovelace Colloquium on non-linear learning journeys in computing.',
+      link: 'https://www.linkedin.com/feed/update/urn:li:activity:7449502577794170880/',
+      linkText: 'See the post',
+    },
   ],
   // Shown under the Outside work list
   aim: 'My larger aim is an AI learning tool with a human in the loop, built for neurodivergent and non-linear learners.',
