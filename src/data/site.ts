@@ -66,8 +66,10 @@ export const site = {
   // Seasons: a title for the Episodes page, and how many episodes the season has.
   // When the last episode of a season is out, the clock moves on to the next season's Episode 1.
   // To start Season 2, add e.g.  2: { title: 'Understanding Lambda' },  (episodes is optional)
+  // A season with no episode files yet shows as "Coming soon" in the Episodes dropdown.
   seasons: {
     1: { title: 'Understanding S3', episodes: 6 },
+    2: { title: 'Understanding Lambda' },
   } as Record<number, { title: string; episodes?: number }>,
 
   // The Home page clock counts down to your next episode: every Monday at 9am UK time.

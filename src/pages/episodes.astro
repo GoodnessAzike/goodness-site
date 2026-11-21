@@ -9,12 +9,20 @@ const episodes = (await getCollection('episodes')).sort(
 const rendered = await Promise.all(
   episodes.map(async (ep) => ({ ep, Content: (await render(ep)).Content })),
 );
-// Group by season, newest season first
-const seasons = [...new Set(episodes.map((ep) => ep.data.season))].map((n) => ({
-  n,
-  title: site.seasons[n]?.title,
-  items: rendered.filter(({ ep }) => ep.data.season === n),
-}));
+// Every season that has episodes or is listed in site.ts, newest first.
+// A listed season with no episodes yet is "coming soon".
+const seasonNumbers = [...new Set([
+  ...episodes.map((ep) => ep.data.season),
+  ...Object.keys(site.seasons).map(Number),
+])].sort((a, b) => b - a);
+const seasons = seasonNumbers.map((n) => {
+  const items = rendered.filter(({ ep }) => ep.data.season === n);
+  return { n, title: site.seasons[n]?.title, items, soon: items.length === 0 };
+});
+// Open on the newest season that has episodes
+const current = seasons.find((s) => !s.soon)?.n ?? seasons[0]?.n;
+const label = (s: (typeof seasons)[number]) =>
+  `Season ${s.n}${s.title ? `: ${s.title}` : ''}`;
 const newestId = episodes[0]?.id;
 const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
@@ -24,9 +32,31 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
     <p>A weekly log of what I am learning, newest first. Each one ends with what I am learning next.</p>
   </header>
 
+  {seasons.length > 0 && (
+    <div class="picker">
+      <label for="season-pick" class="visually-hidden">Choose a season</label>
+      <select id="season-pick" data-season-pick>
+        {seasons.map((s) => (
+          <option value={s.n} selected={s.n === current}>
+            {label(s)}{s.soon ? ' (soon)' : ''}
+          </option>
+        ))}
+      </select>
+      <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+    </div>
+  )}
+
   {seasons.map((season) => (
-    <section class="season-block" aria-labelledby={`season-${season.n}`}>
-      <h2 class="season" id={`season-${season.n}`}>Season {season.n}{season.title ? `: ${season.title}` : ''}</h2>
+    <section class="season-block" aria-labelledby={`season-${season.n}`} data-season={season.n}>
+      <h2 class="season" id={`season-${season.n}`}>{label(season)}</h2>
+      {season.soon ? (
+        <div class="soon">
+          <p class="soon-stamp">Coming soon</p>
+          <p class="soon-title">{label(season)}</p>
+          <p class="soon-note">Starts after the Season 1 finale.</p>
+          <button type="button" class="button" data-back>Back to Season {seasons.find((x) => !x.soon)?.n}</button>
+        </div>
+      ) : (
       <ol class="log" reversed>
         {season.items.map(({ ep, Content }) => (
           <li class:list={['entry', { newest: ep.id === newestId }]}>
@@ -62,12 +92,42 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
           </li>
         ))}
       </ol>
+      )}
     </section>
   ))}
   {episodes.length === 0 && <p>No episodes yet. Add a Markdown file to src/content/episodes/ to start Season 1.</p>}
 </Base>
 
 <script>
+  // Season picker: show one season at a time (all seasons stay visible without JavaScript)
+  const pick = document.querySelector<HTMLSelectElement>('[data-season-pick]');
+  const blocks = Array.from(document.querySelectorAll<HTMLElement>('[data-season]'));
+  if (pick && blocks.length) {
+    const showSeason = (n: string, scroll = false) => {
+      blocks.forEach((b) => { b.hidden = b.dataset.season !== n; });
+      pick.value = n;
+      if (scroll) pick.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    };
+    const fromHash = location.hash.match(/^#season-(\d+)$/)?.[1];
+    showSeason(fromHash && blocks.some((b) => b.dataset.season === fromHash) ? fromHash : pick.value);
+    window.addEventListener('hashchange', () => {
+      const n = location.hash.match(/^#season-(\d+)$/)?.[1];
+      if (n && blocks.some((b) => b.dataset.season === n)) showSeason(n);
+    });
+    pick.addEventListener('change', () => {
+      history.replaceState(null, '', `#season-${pick.value}`);
+      showSeason(pick.value);
+    });
+    document.querySelectorAll<HTMLButtonElement>('[data-back]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const first = pick.querySelector<HTMLOptionElement>('option:not([value="' + pick.value + '"])');
+        const target = Array.from(pick.options).find((o) => !o.textContent!.includes('(soon)'));
+        showSeason((target ?? first)!.value, true);
+        history.replaceState(null, '', `#season-${pick.value}`);
+      }),
+    );
+  }
+
   import { unlockAudio } from '../scripts/unlock-audio';
   // Listen: plays the episode's own recording if it has one, otherwise reads it aloud
   // with the browser's built-in voice. Only one episode plays at a time.
@@ -126,6 +186,39 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
 
 <style>
   .season-block + .season-block { margin-top: clamp(24px, 4vw, 40px); }
+  .season-block[hidden] { display: none; }
+
+  /* Netflix-style season dropdown */
+  .picker { position: relative; display: inline-block; margin-bottom: 32px; max-width: 100%; }
+  @media (max-width: 560px) { .picker { display: block; } .picker select { width: 100%; font-size: 1.1875rem; } }
+  .picker select {
+    appearance: none; -webkit-appearance: none;
+    max-width: 100%;
+    padding: 12px 52px 12px 18px;
+    background: var(--ink-raised); color: var(--paper);
+    border: 1.5px solid var(--line);
+    font-family: var(--font-display); font-weight: 700; font-size: clamp(1.25rem, 3.4vw, 1.625rem);
+    cursor: pointer;
+  }
+  .picker select:hover { border-color: var(--paper); }
+  .picker .chev { position: absolute; right: 16px; top: 50%; width: 22px; height: 22px; margin-top: -11px; fill: none; stroke: var(--signal); stroke-width: 2.5; pointer-events: none; }
+  /* with the dropdown showing the season name, hide the repeated heading for sighted users */
+  .picker ~ .season-block .season { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* coming soon teaser */
+  .soon {
+    position: relative; overflow: hidden;
+    border: 1px solid var(--line); background: var(--ink-raised);
+    padding: clamp(32px, 6vw, 64px) clamp(20px, 5vw, 48px);
+    display: grid; gap: 14px; justify-items: start;
+  }
+  .soon-stamp {
+    border: 3px double var(--redline); color: var(--redline);
+    padding: 2px 12px; transform: rotate(-4deg);
+    font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; letter-spacing: 0.04em;
+  }
+  .soon-title { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.25rem, 7vw, 4.5rem); line-height: 0.95; }
+  .soon-note { color: var(--muted); }
   .season { font-size: clamp(1.75rem, 4vw, 2.5rem); margin-bottom: 28px; }
   article h3 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 800; line-height: 0.95; }
   .log { list-style: none; margin: 0; padding: 0; display: grid; }
