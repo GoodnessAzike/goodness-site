@@ -30,8 +30,12 @@ export const site = {
   // Your CV lives at public/cv.pdf. Replace that file with your real CV.
   cv: '/cv.pdf',
 
-  // Season titles, shown on the Episodes page
-  seasons: { 1: 'Understanding S3' } as Record<number, string>,
+  // Seasons: a title for the Episodes page, and how many episodes the season has.
+  // When the last episode of a season is out, the clock moves on to the next season's Episode 1.
+  // To start Season 2, add e.g.  2: { title: 'Understanding Lambda' },  (episodes is optional)
+  seasons: {
+    1: { title: 'Understanding S3', episodes: 6 },
+  } as Record<number, { title: string; episodes?: number }>,
 
   // The Home page clock counts down to your next episode: every Monday at 9am UK time.
   // weekday: 0 = Sunday, 1 = Monday ... 6 = Saturday. hour: 0-23 in the time zone below.

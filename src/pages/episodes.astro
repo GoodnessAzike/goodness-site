@@ -9,6 +9,13 @@ const episodes = (await getCollection('episodes')).sort(
 const rendered = await Promise.all(
   episodes.map(async (ep) => ({ ep, Content: (await render(ep)).Content })),
 );
+// Group by season, newest season first
+const seasons = [...new Set(episodes.map((ep) => ep.data.season))].map((n) => ({
+  n,
+  title: site.seasons[n]?.title,
+  items: rendered.filter(({ ep }) => ep.data.season === n),
+}));
+const newestId = episodes[0]?.id;
 const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
 <Base title="Episodes" description="A weekly learning log, newest first.">
@@ -17,35 +24,39 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
     <p>A weekly log of what I am learning, newest first. Each one ends with what I am learning next.</p>
   </header>
 
-  {[...new Set(episodes.map((ep) => ep.data.season))].length > 0 && (
-    <h2 class="season">Season {episodes[0]?.data.season}{site.seasons[episodes[0]?.data.season] ? `: ${site.seasons[episodes[0].data.season]}` : ''}</h2>
-  )}
-  <ol class="log" reversed>
-    {rendered.map(({ ep, Content }) => (
-      <li class="entry">
-        <div class="marker" aria-hidden="true"></div>
-        <article>
-          <p class="code">Season {ep.data.season}, Episode {ep.data.episode}</p>
-          <h2>{ep.data.title}</h2>
-          {ep.data.subtitle && <p class="subtitle">{ep.data.subtitle}</p>}
-          <p class="meta">
-            <time datetime={ep.data.date.toISOString().slice(0, 10)}>{fmt.format(ep.data.date)}</time>
-            {ep.data.sample && <span class="sample-tag">Sample, replace me</span>}
-          </p>
-          <div class="notes"><Content /></div>
-          <p class="cliff hand"><span class="cliff-label">Next time:</span> {ep.data.cliffhanger}</p>
-          {ep.data.medium
-            ? <a class="button" href={ep.data.medium} target="_blank" rel="noopener">Read this episode on Medium</a>
-            : <span class="ph">Placeholder: Medium link</span>}
-        </article>
-      </li>
-    ))}
-  </ol>
+  {seasons.map((season) => (
+    <section class="season-block" aria-labelledby={`season-${season.n}`}>
+      <h2 class="season" id={`season-${season.n}`}>Season {season.n}{season.title ? `: ${season.title}` : ''}</h2>
+      <ol class="log" reversed>
+        {season.items.map(({ ep, Content }) => (
+          <li class:list={['entry', { newest: ep.id === newestId }]}>
+            <div class="marker" aria-hidden="true"></div>
+            <article>
+              <p class="code">Season {ep.data.season}, Episode {ep.data.episode}</p>
+              <h3>{ep.data.title}</h3>
+              {ep.data.subtitle && <p class="subtitle">{ep.data.subtitle}</p>}
+              <p class="meta">
+                <time datetime={ep.data.date.toISOString().slice(0, 10)}>{fmt.format(ep.data.date)}</time>
+                {ep.data.sample && <span class="sample-tag">Sample, replace me</span>}
+              </p>
+              <div class="notes"><Content /></div>
+              <p class="cliff hand"><span class="cliff-label">Next time:</span> {ep.data.cliffhanger}</p>
+              {ep.data.medium
+                ? <a class="button" href={ep.data.medium} target="_blank" rel="noopener">Read this episode on Medium</a>
+                : <span class="ph">Placeholder: Medium link</span>}
+            </article>
+          </li>
+        ))}
+      </ol>
+    </section>
+  ))}
   {episodes.length === 0 && <p>No episodes yet. Add a Markdown file to src/content/episodes/ to start Season 1.</p>}
 </Base>
 
 <style>
+  .season-block + .season-block { margin-top: clamp(24px, 4vw, 40px); }
   .season { font-size: clamp(1.75rem, 4vw, 2.5rem); margin-bottom: 28px; }
+  article h3 { font-size: clamp(2rem, 5vw, 2.75rem); font-weight: 800; line-height: 0.95; }
   .log { list-style: none; margin: 0; padding: 0; display: grid; }
   .entry {
     position: relative;
@@ -64,7 +75,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
   }
   .entry:last-child::before { display: none; }
   .marker { width: 28px; height: 28px; border: 2px solid var(--line); background: var(--ink); position: relative; z-index: 1; }
-  .entry:first-child .marker { border-color: var(--signal); background: var(--signal-ghost); }
+  .entry.newest .marker { border-color: var(--signal); background: var(--signal-ghost); }
 
   article { display: grid; gap: 12px; justify-items: start; min-width: 0; }
   .code { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; color: var(--muted); line-height: 1.2; }

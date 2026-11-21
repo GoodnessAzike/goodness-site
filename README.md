@@ -38,6 +38,16 @@ Copy a file in `src/content/episodes/`, e.g. `s01e03.md`. Update `season`, `epis
 `cliffhanger`, and `medium` (your Medium post link). Write your notes below the second `---` line.
 The newest episode shows first, and the Home page clock shows the next episode number.
 
+### Start a new season
+
+Each series is a season (Season 1 is Understanding S3). To start Season 2:
+1. In `src/data/site.ts`, add a line under `seasons`, e.g. `2: { title: 'Understanding Lambda' },`
+   Add `episodes: 6` (or however many) if you know how long the season will be.
+2. Add `src/content/episodes/s02e01.md` with `season: 2` and `episode: 1`.
+
+The Episodes page groups episodes by season, newest first. When a season's last episode is out,
+the Home clock moves on to the next season's Episode 1.
+
 ### Add a Project
 
 Copy a file in `src/content/projects/`. Update `title`, `summary`, `stack`, and `github`.
