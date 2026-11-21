@@ -1,17 +1,19 @@
 ---
-// Home page whiteboard: it pops open and a hand draws a simple data pipeline.
+// Home page whiteboard: it pops open and a hand draws one of Goodness's pipelines.
 // Two layouts: one row on wide screens, a two-column snake on phones.
 import rough from 'roughjs';
 
-type Shape = 'box' | 'cylinder' | 'dashboard';
+type Shape = 'box' | 'cylinder' | 'person';
+const title = 'turn versioning on for shop-data-lake';
 const nodes: { label: string; shape: Shape }[] = [
-  { label: 'API', shape: 'box' },
-  { label: 'Ingest', shape: 'box' },
-  { label: 'Raw storage', shape: 'cylinder' },
-  { label: 'Quality checks', shape: 'box' },
-  { label: 'Warehouse', shape: 'cylinder' },
-  { label: 'Dashboard', shape: 'dashboard' },
+  { label: 'Amazon Selling Partner API', shape: 'box' },
+  { label: 'nightly Lambda', shape: 'box' },
+  { label: 'shop-data-lake', shape: 'cylinder' },
+  { label: 'analyst', shape: 'person' },
 ];
+
+// Notes written next to a node, drawn right after it. Positions differ per layout.
+type Note = { after: number; text: string; x: number; y: number; red?: boolean; size?: number; max?: number; rotate?: number };
 
 const gen = rough.generator();
 const ink = (seed: number, extra = {}) => ({ seed, roughness: 1.1, bowing: 1.2, strokeWidth: 2.2, stroke: '#1e1e1e', ...extra });
@@ -32,44 +34,54 @@ function wrap(text: string, max: number) {
   return out;
 }
 
-function layout(centers: [number, number][], nw: number, nh: number, size: number, titleAt: [number, number]) {
+function layout(centers: [number, number][], nw: number, nh: number, size: number, titleAt: [number, number], notes: Note[], titleMax = 60) {
   const items: Item[] = [];
   let seed = 1;
-  items.push({ kind: 'write', lines: ['a simple data pipeline'], x: titleAt[0], y: titleAt[1], size: size + 6, anchor: 'start', red: true, rotate: -2 });
+  items.push({ kind: 'write', lines: wrap(title, titleMax), x: titleAt[0], y: titleAt[1], size: size + 4, anchor: 'start', red: true, rotate: -1.5 });
+
+  // half-width of each node, so arrows stop at its edge
+  const half = (shape: Shape) => (shape === 'person' ? 30 : nw / 2);
 
   nodes.forEach((n, i) => {
     const [cx, cy] = centers[i];
     const x = cx - nw / 2, y = cy - nh / 2;
+    const lineH = size * 1.15;
 
     if (n.shape === 'cylinder') {
-      const ry = 11;
+      const ry = 12;
       paths(gen.ellipse(cx, y + ry, nw, ry * 2, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
       paths(gen.line(x, y + ry, x, y + nh - ry, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
       paths(gen.path(`M${x} ${y + nh - ry} A ${nw / 2} ${ry} 0 0 0 ${x + nw} ${y + nh - ry}`, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
       paths(gen.line(x + nw, y + nh - ry, x + nw, y + ry, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
-    } else {
+    } else if (n.shape === 'box') {
       paths(gen.rectangle(x, y, nw, nh, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+    } else {
+      // stick figure
+      paths(gen.circle(cx, y + 16, 28, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+      paths(gen.line(cx, y + 31, cx, y + 62, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+      paths(gen.line(cx - 20, y + 42, cx + 20, y + 42, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+      paths(gen.line(cx, y + 62, cx - 15, y + 86, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+      paths(gen.line(cx, y + 62, cx + 15, y + 86, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
     }
 
-    const lines = wrap(n.label, 9);
-    const lineH = size * 1.15;
-    const textTop = n.shape === 'dashboard' ? y + size + 8 : cy - ((lines.length - 1) * lineH) / 2 + size * 0.35 + (n.shape === 'cylinder' ? 6 : 0);
-    items.push({ kind: 'write', lines, x: cx, y: textTop, size, anchor: 'middle' });
+    const lines = wrap(n.label, 14);
+    const textY = n.shape === 'person'
+      ? y + nh + size + 4
+      : cy - ((lines.length - 1) * lineH) / 2 + size * 0.35 + (n.shape === 'cylinder' ? 7 : 0);
+    items.push({ kind: 'write', lines, x: cx, y: textY, size, anchor: 'middle' });
 
-    if (n.shape === 'dashboard') {
-      // three little bars
-      const base = y + nh - 12;
-      [[-22, 16], [0, 28], [22, 21]].forEach(([dx, h]) => {
-        paths(gen.line(cx + dx, base, cx + dx, base - h, ink(seed++, { strokeWidth: 5, stroke: '#e03131' }))).forEach((d) => items.push({ kind: 'stroke', d, red: true }));
-      });
-    }
+    notes.filter((nt) => nt.after === i).forEach((nt) => {
+      const ns = nt.size ?? size - 2;
+      items.push({ kind: 'write', lines: wrap(nt.text, nt.max ?? 30), x: nt.x, y: nt.y, size: ns, anchor: 'middle', red: nt.red, rotate: nt.rotate });
+    });
 
     if (i < nodes.length - 1) {
       const [nx, ny] = centers[i + 1];
+      const next = nodes[i + 1];
       let x1, y1, x2, y2;
       if (Math.abs(ny - cy) < 1) {
         const dir = Math.sign(nx - cx);
-        x1 = cx + dir * (nw / 2 + 6); x2 = nx - dir * (nw / 2 + 6); y1 = y2 = cy;
+        x1 = cx + dir * (half(n.shape) + 6); x2 = nx - dir * (half(next.shape) + 6); y1 = y2 = cy;
       } else {
         x1 = x2 = cx; y1 = cy + nh / 2 + 6; y2 = ny - nh / 2 - 6;
       }
@@ -83,17 +95,31 @@ function layout(centers: [number, number][], nw: number, nh: number, size: numbe
 }
 
 const wide = {
-  w: 1000, h: 250,
-  items: layout(nodes.map((_, i) => [88 + i * 165, 170] as [number, number]), 128, 96, 21, [34, 58]),
-};
-const tall = {
-  w: 400, h: 560,
+  w: 1000, h: 345,
   items: layout(
-    [[105, 160], [295, 160], [295, 310], [105, 310], [105, 460], [295, 460]],
-    150, 92, 21, [24, 58],
+    [[110, 165], [370, 165], [630, 165], [885, 165]], 170, 100, 22, [34, 52],
+    [
+      { after: 1, text: 'rerun? deleted by mistake?', x: 370, y: 252, red: true, max: 16, rotate: -2 },
+      { after: 2, text: 'raw/orders/2026-10-26.json', x: 630, y: 245, size: 17 },
+      { after: 2, text: 'versioning on', x: 630, y: 285, red: true, rotate: -2 },
+      { after: 3, text: 'still gets the file in the morning', x: 885, y: 287, red: true, max: 21, rotate: -2 },
+    ],
   ),
 };
-const label = 'Hand-drawn data pipeline: ' + nodes.map((n) => n.label).join(', then ') + '.';
+const tall = {
+  w: 400, h: 630,
+  items: layout(
+    [[105, 180], [295, 180], [295, 410], [105, 410]], 160, 96, 20, [20, 48],
+    [
+      { after: 1, text: 'rerun? deleted by mistake?', x: 130, y: 280, red: true, max: 16, rotate: -2 },
+      { after: 2, text: 'raw/orders/ 2026-10-26.json', x: 295, y: 488, size: 16, max: 14 },
+      { after: 2, text: 'versioning on', x: 295, y: 545, red: true, rotate: -2 },
+      { after: 3, text: 'still gets the file in the morning', x: 105, y: 520, red: true, max: 14, rotate: -2 },
+    ],
+    24,
+  ),
+};
+const label = `Hand-drawn pipeline, ${title}: ` + nodes.map((n) => n.label).join(', then ') + '. Versioning is on, so if the Lambda reruns or someone deletes the file by mistake, the analyst still gets the file in the morning.';
 ---
 <section class="pipeline" aria-label="A hand drawing a data pipeline on a whiteboard">
   <div class="board" data-board>
