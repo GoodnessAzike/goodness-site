@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import { site } from '../data/site';
 
 const episodes = (await getCollection('episodes')).sort(
   (a, b) => b.data.season - a.data.season || b.data.episode - a.data.episode,
@@ -16,6 +17,9 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
     <p>A weekly log of what I am learning, newest first. Each one ends with what I am learning next.</p>
   </header>
 
+  {[...new Set(episodes.map((ep) => ep.data.season))].length > 0 && (
+    <h2 class="season">Season {episodes[0]?.data.season}{site.seasons[episodes[0]?.data.season] ? `: ${site.seasons[episodes[0].data.season]}` : ''}</h2>
+  )}
   <ol class="log" reversed>
     {rendered.map(({ ep, Content }) => (
       <li class="entry">
@@ -41,6 +45,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
 </Base>
 
 <style>
+  .season { font-size: clamp(1.75rem, 4vw, 2.5rem); margin-bottom: 28px; }
   .log { list-style: none; margin: 0; padding: 0; display: grid; }
   .entry {
     position: relative;

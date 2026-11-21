@@ -30,6 +30,9 @@ export const site = {
   // Your CV lives at public/cv.pdf. Replace that file with your real CV.
   cv: '/cv.pdf',
 
+  // Season titles, shown on the Episodes page
+  seasons: { 1: 'Understanding S3' } as Record<number, string>,
+
   // The Home page clock counts down to your next episode.
   // TODO: set the weekday (0 = Sunday, 1 = Monday ... 6 = Saturday)
   // and hour (0-23, the visitor's local time) your new episodes go out.
