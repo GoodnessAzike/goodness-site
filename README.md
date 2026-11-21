@@ -1,6 +1,6 @@
 # Goodness: personal site
 
-Static site built with Astro. Hosted on Cloudflare Pages.
+Static site built with Astro. Live at https://goodnessazike.com (Cloudflare, rebuilds on every push to `main`).
 
 ## Run it on your computer
 
