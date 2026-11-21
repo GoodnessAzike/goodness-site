@@ -11,7 +11,7 @@ export const site = {
   bio: [
     '', // TODO: bio paragraph
   ],
-  linkedin: '', // TODO: e.g. https://www.linkedin.com/in/your-handle
+  linkedin: 'https://www.linkedin.com/in/goodnessazike/',
   email: 'goodnessazike@gmail.com',
   medium: '', // TODO: your Medium profile link
   github: '', // TODO: your GitHub profile link
