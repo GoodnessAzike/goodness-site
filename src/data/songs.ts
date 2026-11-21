@@ -28,6 +28,7 @@ export const themeSongs: Stage[] = [
     stage: 'Now',
     songs: [
       { artist: 'RAYE', song: 'Click Clack Symphony. (feat. Hans Zimmer)', url: 'https://open.spotify.com/track/5PspYmmQ8nKESNTcBY2LlX', note: '' }, // TODO: one-line note
+      { artist: 'Noah Kahan', song: 'Orbiter', url: 'https://open.spotify.com/track/4W6yulge3h7FSy0zGFrNKs', note: '' }, // TODO: one-line note
     ],
   },
 ];
