@@ -1,0 +1,282 @@
+---
+// Home page whiteboard: it pops open and a hand draws a simple data pipeline.
+// Two layouts: one row on wide screens, a two-column snake on phones.
+import rough from 'roughjs';
+
+type Shape = 'box' | 'cylinder' | 'dashboard';
+const nodes: { label: string; shape: Shape }[] = [
+  { label: 'API', shape: 'box' },
+  { label: 'Ingest', shape: 'box' },
+  { label: 'Raw storage', shape: 'cylinder' },
+  { label: 'Quality checks', shape: 'box' },
+  { label: 'Warehouse', shape: 'cylinder' },
+  { label: 'Dashboard', shape: 'dashboard' },
+];
+
+const gen = rough.generator();
+const ink = (seed: number, extra = {}) => ({ seed, roughness: 1.1, bowing: 1.2, strokeWidth: 2.2, stroke: '#1e1e1e', ...extra });
+const paths = (d: ReturnType<typeof gen.line>) => gen.toPaths(d).map((p) => p.d);
+
+type Item =
+  | { kind: 'stroke'; d: string; red?: boolean }
+  | { kind: 'write'; lines: string[]; x: number; y: number; size: number; anchor: 'start' | 'middle'; red?: boolean; rotate?: number };
+
+function wrap(text: string, max: number) {
+  const out: string[] = [];
+  let line = '';
+  for (const w of text.split(' ')) {
+    if (line && (line + ' ' + w).length > max) { out.push(line); line = w; }
+    else line = line ? `${line} ${w}` : w;
+  }
+  if (line) out.push(line);
+  return out;
+}
+
+function layout(centers: [number, number][], nw: number, nh: number, size: number, titleAt: [number, number]) {
+  const items: Item[] = [];
+  let seed = 1;
+  items.push({ kind: 'write', lines: ['a simple data pipeline'], x: titleAt[0], y: titleAt[1], size: size + 6, anchor: 'start', red: true, rotate: -2 });
+
+  nodes.forEach((n, i) => {
+    const [cx, cy] = centers[i];
+    const x = cx - nw / 2, y = cy - nh / 2;
+
+    if (n.shape === 'cylinder') {
+      const ry = 11;
+      paths(gen.ellipse(cx, y + ry, nw, ry * 2, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+      paths(gen.line(x, y + ry, x, y + nh - ry, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+      paths(gen.path(`M${x} ${y + nh - ry} A ${nw / 2} ${ry} 0 0 0 ${x + nw} ${y + nh - ry}`, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+      paths(gen.line(x + nw, y + nh - ry, x + nw, y + ry, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+    } else {
+      paths(gen.rectangle(x, y, nw, nh, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+    }
+
+    const lines = wrap(n.label, 9);
+    const lineH = size * 1.15;
+    const textTop = n.shape === 'dashboard' ? y + size + 8 : cy - ((lines.length - 1) * lineH) / 2 + size * 0.35 + (n.shape === 'cylinder' ? 6 : 0);
+    items.push({ kind: 'write', lines, x: cx, y: textTop, size, anchor: 'middle' });
+
+    if (n.shape === 'dashboard') {
+      // three little bars
+      const base = y + nh - 12;
+      [[-22, 16], [0, 28], [22, 21]].forEach(([dx, h]) => {
+        paths(gen.line(cx + dx, base, cx + dx, base - h, ink(seed++, { strokeWidth: 5, stroke: '#e03131' }))).forEach((d) => items.push({ kind: 'stroke', d, red: true }));
+      });
+    }
+
+    if (i < nodes.length - 1) {
+      const [nx, ny] = centers[i + 1];
+      let x1, y1, x2, y2;
+      if (Math.abs(ny - cy) < 1) {
+        const dir = Math.sign(nx - cx);
+        x1 = cx + dir * (nw / 2 + 6); x2 = nx - dir * (nw / 2 + 6); y1 = y2 = cy;
+      } else {
+        x1 = x2 = cx; y1 = cy + nh / 2 + 6; y2 = ny - nh / 2 - 6;
+      }
+      paths(gen.line(x1, y1, x2, y2, ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+      const ang = Math.atan2(y2 - y1, x2 - x1);
+      const head = (a: number) => [x2 - 13 * Math.cos(ang + a), y2 - 13 * Math.sin(ang + a)] as [number, number];
+      paths(gen.linearPath([head(0.5), [x2, y2], head(-0.5)], ink(seed++))).forEach((d) => items.push({ kind: 'stroke', d }));
+    }
+  });
+  return items;
+}
+
+const wide = {
+  w: 1000, h: 250,
+  items: layout(nodes.map((_, i) => [88 + i * 165, 170] as [number, number]), 128, 96, 21, [34, 58]),
+};
+const tall = {
+  w: 400, h: 560,
+  items: layout(
+    [[105, 160], [295, 160], [295, 310], [105, 310], [105, 460], [295, 460]],
+    150, 92, 21, [24, 58],
+  ),
+};
+const label = 'Hand-drawn data pipeline: ' + nodes.map((n) => n.label).join(', then ') + '.';
+---
+<section class="pipeline" aria-label="A hand drawing a data pipeline on a whiteboard">
+  <div class="board" data-board>
+    {[{ key: 'wide', ...wide }, { key: 'tall', ...tall }].map((v) => (
+      <svg class={`v-${v.key}`} viewBox={`0 0 ${v.w} ${v.h}`} role="img" aria-label={label}>
+        <defs>
+          {v.items.map((it, i) => it.kind === 'write' && (
+            <clipPath id={`pb-${v.key}-${i}`}><rect x="0" y="0" width={v.w} height={v.h} /></clipPath>
+          ))}
+        </defs>
+        {v.items.map((it, i) => it.kind === 'stroke'
+          ? <path class:list={['pb-stroke', { red: it.red }]} d={it.d} />
+          : (
+            <g clip-path={`url(#pb-${v.key}-${i})`} data-clip={`pb-${v.key}-${i}`} class="pb-write">
+              <text
+                class:list={['pb-text', { red: it.red }]}
+                x={it.x} y={it.y} font-size={it.size} text-anchor={it.anchor}
+                transform={it.rotate ? `rotate(${it.rotate} ${it.x} ${it.y})` : undefined}
+              >
+                {it.lines.map((l, j) => <tspan x={it.x} dy={j === 0 ? 0 : it.size * 1.15}>{l}</tspan>)}
+              </text>
+            </g>
+          ))}
+        <!-- line-art hand holding a marker; pen tip at 0,0 -->
+        <g class="hand" data-hand aria-hidden="true" style="opacity:0">
+          <g transform="rotate(-28) scale(1.2)">
+            <path d="M-5 -16 L5 -16 L1.6 -2 L-1.6 -2 Z" fill="#1e1e1e" />
+            <rect x="-7.5" y="-118" width="15" height="103" rx="3" fill="#1e1e1e" />
+            <rect x="-7.5" y="-118" width="15" height="22" rx="3" fill="#e03131" />
+            <path d="M-9 -40 C -21 -56, -16 -86, 0 -92 C 22 -100, 58 -96, 73 -70 C 88 -44, 72 -18, 46 -17 C 26 -16, 6 -24, -9 -40 Z" fill="#fff" stroke="#1e1e1e" stroke-width="2.6" stroke-linejoin="round" />
+            <path d="M-4 -52 C 10 -49, 22 -52, 33 -59 M-2 -65 C 12 -62, 26 -66, 37 -73 M2 -78 C 15 -76, 27 -79, 38 -85" fill="none" stroke="#1e1e1e" stroke-width="2.2" stroke-linecap="round" />
+            <path d="M-12 -74 C -28 -68, -24 -50, -7 -47" fill="#fff" stroke="#1e1e1e" stroke-width="2.6" stroke-linecap="round" />
+            <path d="M46 -17 L 96 52 M73 -70 L 140 -8" fill="none" stroke="#1e1e1e" stroke-width="2.6" stroke-linecap="round" />
+          </g>
+        </g>
+      </svg>
+    ))}
+  </div>
+  <button type="button" class="replay" data-replay>Draw it again</button>
+</section>
+
+<script>
+  const SPEED = 1300; // path units per second
+  const WRITE = 16;   // characters per second
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const frame = () => new Promise<number>((r) => requestAnimationFrame(r));
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  const section = document.querySelector<HTMLElement>('.pipeline');
+  if (section) {
+    const board = section.querySelector<HTMLElement>('[data-board]')!;
+    const svgs = Array.from(board.querySelectorAll('svg'));
+    let run = 0;
+
+    const clipRect = (g: Element, svg: SVGSVGElement) =>
+      svg.querySelector<SVGRectElement>(`#${g.getAttribute('data-clip')} rect`)!;
+
+    const setAll = (svg: SVGSVGElement, drawn: boolean) => {
+      svg.querySelectorAll<SVGPathElement>('.pb-stroke').forEach((p) => {
+        if (drawn) { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; return; }
+        const len = p.getTotalLength() || 1;
+        p.style.strokeDasharray = `${len}`;
+        p.style.strokeDashoffset = `${len}`;
+      });
+      svg.querySelectorAll('.pb-write').forEach((g) => clipRect(g, svg).setAttribute('width', drawn ? '10000' : '0'));
+      svg.querySelector<SVGGElement>('[data-hand]')!.style.opacity = '0';
+    };
+
+    const play = async () => {
+      const me = ++run;
+      const svg = svgs.find((s) => s.getBoundingClientRect().width > 0) ?? svgs[0];
+      svgs.forEach((s) => setAll(s, s !== svg));
+      const hand = svg.querySelector<SVGGElement>('[data-hand]')!;
+      const at = (x: number, y: number) => hand.setAttribute('transform', `translate(${x} ${y})`);
+
+      board.classList.remove('open');
+      void board.offsetWidth;
+      board.classList.add('open');
+      await sleep(700);
+      hand.style.opacity = '1';
+
+      const parts = Array.from(svg.querySelectorAll<SVGElement>('.pb-stroke, .pb-write'));
+      for (const el of parts) {
+        if (me !== run) return;
+        if (el instanceof SVGPathElement) {
+          const len = el.getTotalLength();
+          el.style.strokeDasharray = `${len}`;
+          const dur = Math.max(160, (len / SPEED) * 1000);
+          const t0 = await frame();
+          for (let now = t0; now - t0 < dur; now = await frame()) {
+            if (me !== run) return;
+            const done = len * ((now - t0) / dur);
+            el.style.strokeDashoffset = `${len - done}`;
+            const p = el.getPointAtLength(done);
+            at(p.x, p.y);
+          }
+          el.style.strokeDashoffset = '0';
+        } else {
+          const text = el.querySelector('text')!;
+          const box = text.getBBox();
+          const rect = clipRect(el, svg);
+          const dur = Math.max(300, ((text.textContent || '').trim().length / WRITE) * 1000);
+          const t0 = await frame();
+          for (let now = t0; now - t0 < dur; now = await frame()) {
+            if (me !== run) return;
+            const t = (now - t0) / dur;
+            rect.setAttribute('width', `${box.x + box.width * t}`);
+            at(box.x + box.width * t, box.y + box.height * 0.8 + Math.sin(now / 45) * 3);
+          }
+          rect.setAttribute('width', '10000');
+        }
+      }
+      if (me !== run) return;
+      await sleep(300);
+      hand.style.opacity = '0';
+    };
+
+    section.querySelector('[data-replay]')!.addEventListener('click', () => {
+      if (reduce) return;
+      play();
+    });
+
+    if (reduce) {
+      svgs.forEach((s) => setAll(s, true));
+      board.classList.add('open');
+    } else {
+      // Hide until it scrolls into view, then open and draw
+      svgs.forEach((s) => setAll(s, false));
+      board.classList.add('waiting');
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          io.disconnect();
+          board.classList.remove('waiting');
+          document.fonts.ready.then(play);
+        }
+      }, { threshold: 0.35 });
+      io.observe(board);
+    }
+  }
+</script>
+
+<style>
+  .pipeline { margin-bottom: clamp(48px, 8vw, 80px); display: grid; gap: 12px; justify-items: start; }
+  .board {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 0 0 1px rgba(220, 230, 240, 0.25), 0 24px 60px rgba(0, 0, 0, 0.45);
+    padding: clamp(6px, 1.5vw, 14px);
+    overflow: hidden;
+    transform-origin: 50% 0;
+  }
+  .board.waiting { opacity: 0; }
+  /* the board opening: unfolds down from the top like a pulled-down whiteboard */
+  .board.open { animation: open 0.65s cubic-bezier(0.2, 1.25, 0.4, 1) both; }
+  @keyframes open {
+    from { transform: scaleY(0.04) scaleX(0.9); opacity: 0.4; }
+    to { transform: none; opacity: 1; }
+  }
+
+  svg { display: block; width: 100%; height: auto; }
+  .v-tall { display: none; }
+  @media (max-width: 700px) {
+    .v-wide { display: none; }
+    .v-tall { display: block; }
+  }
+
+  .pb-stroke { fill: none; stroke: #1e1e1e; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .pb-stroke.red { stroke: #e03131; stroke-width: 5; }
+  .pb-text { font-family: var(--font-hand); fill: #1e1e1e; }
+  .pb-text.red { fill: #e03131; font-weight: 700; }
+  .hand { pointer-events: none; transition: opacity 0.3s; }
+
+  .replay {
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--paper);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .replay:hover { border-color: var(--paper); }
+</style>
