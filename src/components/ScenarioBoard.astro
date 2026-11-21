@@ -1,11 +1,11 @@
 ---
-// Home page whiteboard: it opens, and a hand draws Scenario 2 out piece by piece,
-// the way Goodness draws a pipeline. Same labels and layout as the Mission File page.
-import { wide, tall, head, tagW, PATH, TITLE, SENTENCE, QUOTE, type Layout } from '../data/scenario2';
+// Home page whiteboard: a project brief lands on the board, and a hand draws the pipeline
+// out piece by piece to understand it before building. Same labels and layout as the Mission File page.
+import { wide, tall, head, tagW, PATH, SENTENCE, QUOTE, type Layout } from '../data/scenario2';
 
 type Item =
   | { kind: 'line'; d: string; cls: string; fill?: boolean }
-  | { kind: 'text'; x: number; y: number; size: number; cls: string; anchor?: 'start' | 'middle' | 'end'; lines: string[] }
+  | { kind: 'text'; x: number; y: number; size: number; cls: string; anchor?: 'start' | 'middle' | 'end'; lines: string[]; rotate?: number }
   | { kind: 'pop'; cls: string; x: number; y: number; html: string };
 
 // Rounded rectangle as a path, so it can be drawn stroke by stroke
@@ -26,7 +26,11 @@ function wrap(text: string, max: number) {
 const STRIPE_ICON = `<rect width="52" height="52" rx="9" fill="#545b64"/><rect x="14" y="14.5" width="24" height="9.5" rx="2.5" fill="none" stroke="#fff" stroke-width="2"/><rect x="14" y="28" width="24" height="9.5" rx="2.5" fill="none" stroke="#fff" stroke-width="2"/><circle cx="19" cy="19.25" r="1.5" fill="#fff"/><circle cx="19" cy="32.75" r="1.5" fill="#fff"/>`;
 const LAMBDA_ICON = `<rect width="52" height="52" rx="9" fill="#ed7100"/><path d="M17 40 L24.5 24 M19.5 13 H25 L35.5 40" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`;
 
-interface Extra { top: number; sentenceMax: number; quoteY: number; quoteMax: number; quoteX: number; quoteAnchor: 'start' | 'middle' }
+interface Extra {
+  note: { x: number; y: number; w: number; h: number; max: number; size: number };
+  red: { x: number; y: number; size: number; lines: string[] };
+  quoteY: number; quoteMax: number; quoteX: number; quoteAnchor: 'start' | 'middle';
+}
 
 function build(L: Layout, X: Extra) {
   const items: Item[] = [];
@@ -48,8 +52,19 @@ function build(L: Layout, X: Extra) {
     items.push({ kind: 'pop', cls: 'icon', x: i.x + i.s / 2, y: i.y + i.s / 2, html: `<g transform="translate(${i.x} ${i.y}) scale(${i.s / 52})">${svg}</g>` });
 
   // Title and brief, written first
-  items.push({ kind: 'text', x: L.account.x + 2, y: X.top, size: f.bold + 6, cls: 'bold', lines: [TITLE] });
-  items.push({ kind: 'text', x: L.account.x + 2, y: X.top + 26, size: f.mono + 0.5, cls: 'sub', lines: wrap(SENTENCE, X.sentenceMax) });
+  // The project brief lands on the board like a taped note
+  const N = X.note;
+  const tilt = -1.5;
+  const cx = N.x + N.w / 2, cy = N.y + N.h / 2;
+  items.push({
+    kind: 'pop', cls: 'note', x: cx, y: N.y,
+    html: `<g transform="rotate(${tilt} ${cx} ${cy})"><rect fill="rgba(0,0,0,0.12)" x="${N.x + 3}" y="${N.y + 5}" width="${N.w}" height="${N.h}" rx="3" /><rect fill="#fff4b8" x="${N.x}" y="${N.y}" width="${N.w}" height="${N.h}" rx="3" /><rect fill="rgba(200,210,222,0.75)" x="${cx - 38}" y="${N.y - 10}" width="76" height="20" rx="2" /></g>`,
+  });
+  items.push({ kind: 'text', x: N.x + 18, y: N.y + 28, size: N.size - 1, cls: 'bold', lines: ['Project brief'], rotate: tilt });
+  items.push({ kind: 'text', x: N.x + 18, y: N.y + 52, size: N.size, cls: 'brief', lines: wrap(SENTENCE, N.max), rotate: tilt });
+
+  // Red pen: draw it out before building
+  items.push({ kind: 'text', x: X.red.x, y: X.red.y, size: X.red.size, cls: 'red-pen', lines: X.red.lines, rotate: -4 });
 
   // Stripe API, outside the account
   items.push({ kind: 'line', d: rr(L.outbound.x, L.outbound.y, L.outbound.w, L.outbound.h, 10), cls: 'outbound' });
@@ -99,17 +114,32 @@ function build(L: Layout, X: Extra) {
 }
 
 const views = [
-  { key: 'wide', viewBox: '20 16 1200 700', items: build(wide, { top: 48, sentenceMax: 200, quoteY: 694, quoteMax: 200, quoteX: 620, quoteAnchor: 'middle' }) },
-  // the phone layout is shifted down to make room for the title and brief
-  { key: 'tall', viewBox: '0 -112 400 1060', items: build(tall, { top: -80, sentenceMax: 56, quoteY: 912, quoteMax: 62, quoteX: 12, quoteAnchor: 'start' }) },
+  {
+    key: 'wide', viewBox: '20 16 1200 700',
+    items: build(wide, {
+      note: { x: 740, y: 44, w: 440, h: 140, max: 52, size: 15 },
+      red: { x: 440, y: 150, size: 26, lines: ['draw it out first'] },
+      quoteY: 694, quoteMax: 200, quoteX: 620, quoteAnchor: 'middle',
+    }),
+  },
+  // the phone layout is shifted down to make room for the brief
+  {
+    key: 'tall', viewBox: '0 -138 400 1086',
+    items: build(tall, {
+      note: { x: 18, y: -124, w: 364, h: 126, max: 44, size: 13.5 },
+      red: { x: 8, y: 56, size: 18, lines: ['draw it', 'out first'] },
+      quoteY: 912, quoteMax: 62, quoteX: 12, quoteAnchor: 'start',
+    }),
+  },
 ];
 
 const story =
-  'A hand draws Scenario 2 on a whiteboard. A Stripe API outside the AWS account sends payments from the last 3 days to a Lambda that runs nightly at 22:00. ' +
+  'A project brief lands on a whiteboard: design a pipeline that pulls payments from Stripe\'s API into raw/payments/ in shop-data-lake, with a 3-day lookback window to pick up refunds. ' +
+  'A note in red pen says draw it out first, and a hand draws the pipeline before building it. A Stripe API outside the AWS account sends payments from the last 3 days to a Lambda that runs nightly at 22:00. ' +
   'The Lambda writes raw/payments/2026-10-26.json to an S3 bucket on 26 October as version 1, then refunds on 27 and 28 October add version 2 and version 3. ' +
   'A lifecycle rule with NoncurrentDays 30 means that from 28 November, version 1 is deleted on 27 November and version 2 on 28 November, and version 3 stays.';
 ---
-<section class="board-section" aria-label="Whiteboard: how I draw a pipeline">
+<section class="board-section" aria-label="Whiteboard: a project brief, drawn out before building">
   <div class="board" data-board>
     {views.map((v) => (
       <svg class={`v-${v.key}`} viewBox={v.viewBox} role="img" aria-label={story}>
@@ -125,8 +155,8 @@ const story =
           : it.kind === 'text'
             ? (
               <g clip-path={`url(#sb-${v.key}-c${i})`} data-kind="text" data-ref={`sb-${v.key}-c${i}`}>
-                <text class={it.cls} x={it.x} y={it.y} font-size={it.size} text-anchor={it.anchor ?? 'start'}>
-                  {it.lines.map((l, j) => <tspan x={it.x} dy={j === 0 ? 0 : it.size * 1.3}>{l}</tspan>)}
+                <text class={it.cls} x={it.x} y={it.y} font-size={it.size} text-anchor={it.anchor ?? 'start'} transform={it.rotate ? `rotate(${it.rotate} ${it.x} ${it.y})` : undefined}>
+                  {it.lines.map((l, j) => <tspan x={it.x} dy={j === 0 ? 0 : it.size * (it.cls === 'red-pen' ? 1.1 : 1.3)}>{l}</tspan>)}
                 </text>
               </g>
             )
@@ -149,7 +179,6 @@ const story =
   </div>
   <div class="under">
     <button type="button" class="replay" data-replay>Draw it again</button>
-    <a href="/mission-files/scenario-2/">See Scenario 2 step by step</a>
   </div>
 </section>
 
@@ -209,8 +238,8 @@ const story =
       board.classList.add('open');
       await sleep(700);
       const first = svg.querySelector<SVGElement>('[data-kind]')!;
-      const fb = (first.querySelector('text') as SVGTextElement).getBBox();
-      at(fb.x, fb.y + fb.height);
+      if (first.dataset.x) at(Number(first.dataset.x), Number(first.dataset.y));
+      else { const fb = first.querySelector('text')!.getBBox(); at(fb.x, fb.y + fb.height); }
       hand.style.opacity = '1';
 
       for (const el of Array.from(svg.querySelectorAll<SVGElement>('[data-kind]'))) {
@@ -240,7 +269,8 @@ const story =
           rect.setAttribute('x', `${box.x - 4}`);
           await glide(box.x, box.y + box.height * 0.8);
           const size = Number(text.getAttribute('font-size'));
-          const cps = size <= 13 ? 70 : 34; // small labels are written faster
+          const cls = text.getAttribute('class') || '';
+          const cps = cls.includes('brief') ? 110 : cls.includes('red-pen') ? 16 : size <= 13 ? 70 : 34; // the brief arrives fast; handwriting is slower
           const dur = Math.max(220, ((text.textContent || '').length / cps) * 1000);
           const t0 = await frame();
           for (let now = t0; now - t0 < dur; now = await frame()) {
@@ -254,7 +284,7 @@ const story =
         } else {
           await glide(Number(el.dataset.x), Number(el.dataset.y));
           el.classList.add('shown');
-          await sleep(el.classList.contains('icon') ? 260 : 60);
+          await sleep(el.classList.contains('note') ? 550 : el.classList.contains('icon') ? 260 : 60);
         }
       }
       if (me !== run) return;
@@ -346,6 +376,10 @@ const story =
 
   .pop { opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.6); transition: opacity 0.2s, transform 0.25s cubic-bezier(0.2, 1.5, 0.4, 1); }
   .pop.shown { opacity: 1; transform: none; }
+  .pop.note { transform: translateY(-30px) rotate(-4deg); }
+  .pop.note.shown { transform: none; transition: opacity 0.3s, transform 0.5s cubic-bezier(0.2, 1.3, 0.4, 1); }
+  .brief { font-family: var(--font-body); fill: var(--b-ink); }
+  .red-pen { font-family: var(--font-hand); font-weight: 700; fill: #e03131; }
   .tag-bg { fill: #fff; }
   .tag-bg.inside { fill: var(--b-account-fill); }
   .head { fill: var(--b-arrow); }
