@@ -1,0 +1,131 @@
+---
+// "How I got here", drawn as a data pipeline. Roles come from the bio in src/data/site.ts.
+// The MSc joins in as a second source (no claim about exact order). A red arrow runs
+// backwards through it all: trace every data problem back to the person it affects.
+
+type Box = { x: number; y: number; w: number; h: number; title: string[]; sub: string[] };
+type Arrow = { d: string; end: [number, number]; angle: number; red?: boolean };
+interface View {
+  key: string; viewBox: string; size: { title: number; sub: number; note: number };
+  boxes: Box[]; arrows: Arrow[]; note: { x: number; y: number; lines: string[] };
+}
+
+// A slightly wonky rectangle, like it was drawn by hand
+const wob = (b: Box) =>
+  `M${b.x + 2} ${b.y + 1} L${b.x + b.w - 1} ${b.y - 2} L${b.x + b.w + 2} ${b.y + b.h - 1} L${b.x - 1} ${b.y + b.h + 2} Z`;
+// Open arrowhead at (x, y) pointing at `angle` degrees
+const head = ([x, y]: [number, number], angle: number) => {
+  const a = (angle * Math.PI) / 180, s = 11;
+  const p = (da: number) => `${x - s * Math.cos(a + da)} ${y - s * Math.sin(a + da)}`;
+  return `M${p(0.5)} L${x} ${y} L${p(-0.5)}`;
+};
+
+const NOTE = ['trace every data problem', 'back to the person it affects'];
+
+const wide: View = {
+  key: 'wide', viewBox: '0 0 1000 330', size: { title: 17, sub: 14, note: 21 },
+  boxes: [
+    { x: 4, y: 150, w: 200, h: 76, title: ['Customer-service desk'], sub: ["one of Nigeria's top banks"] },
+    { x: 230, y: 150, w: 180, h: 76, title: ['Verification Analyst'], sub: ['Aiera'] },
+    { x: 445, y: 150, w: 165, h: 76, title: ['Team Lead'], sub: ['Aiera'] },
+    { x: 572, y: 18, w: 236, h: 76, title: ['MSc Data Science and AI'], sub: ['Leeds Trinity, Distinction'] },
+    { x: 805, y: 150, w: 185, h: 76, title: ['Data Engineer'], sub: ['Aiera'] },
+  ],
+  arrows: [
+    { d: 'M207 190 C 214 186, 219 192, 226 188', end: [226, 188], angle: 0 },
+    { d: 'M413 189 C 425 185, 432 191, 441 188', end: [441, 188], angle: 0 },
+    { d: 'M613 189 C 680 182, 740 194, 801 188', end: [801, 188], angle: 0 },
+    { d: 'M700 97 C 705 130, 820 118, 860 146', end: [860, 146], angle: 40 },
+    { d: 'M895 230 C 900 300, 110 300, 104 233', end: [104, 233], angle: -100, red: true },
+  ],
+  note: { x: 500, y: 318, lines: [NOTE.join(' ')] },
+};
+
+const tall: View = {
+  key: 'tall', viewBox: '0 0 400 650', size: { title: 16, sub: 13, note: 18 },
+  boxes: [
+    { x: 46, y: 20, w: 182, h: 70, title: ['Customer-service desk'], sub: ["one of Nigeria's top banks"] },
+    { x: 46, y: 130, w: 182, h: 70, title: ['Verification Analyst'], sub: ['Aiera'] },
+    { x: 46, y: 240, w: 182, h: 70, title: ['Team Lead'], sub: ['Aiera'] },
+    { x: 240, y: 325, w: 152, h: 104, title: ['MSc Data Science', 'and AI'], sub: ['Leeds Trinity,', 'Distinction'] },
+    { x: 46, y: 470, w: 182, h: 70, title: ['Data Engineer'], sub: ['Aiera'] },
+  ],
+  arrows: [
+    { d: 'M137 93 C 133 105, 141 114, 137 126', end: [137, 126], angle: 90 },
+    { d: 'M137 203 C 133 215, 141 224, 137 236', end: [137, 236], angle: 90 },
+    { d: 'M137 313 C 130 370, 144 420, 137 466', end: [137, 466], angle: 90 },
+    { d: 'M314 432 C 314 458, 260 452, 232 474', end: [232, 474], angle: 145 },
+    { d: 'M43 508 C 4 505, 4 60, 42 56', end: [42, 56], angle: 0, red: true },
+  ],
+  note: { x: 46, y: 584, lines: NOTE },
+};
+
+const views = [wide, tall];
+const label = 'How I got here, drawn as a pipeline: a customer-service desk at one of Nigeria\'s top banks, then Verification Analyst and Team Lead at Aiera, with an MSc in Data Science and AI at Leeds Trinity (Distinction) joining in, leading to Data Engineer at Aiera. A red arrow runs back through it all: trace every data problem back to the person it affects.';
+---
+<section class="career" aria-labelledby="career-title">
+  <h2 id="career-title">How I got here</h2>
+  <figure class="sheet" data-career>
+    {views.map((v) => {
+      let i = 0;
+      return (
+        <svg class={`v-${v.key}`} viewBox={v.viewBox} role="img" aria-label={label}>
+          {v.boxes.map((b) => (
+            <g>
+              <path class="draw box" d={wob(b)} style={`--i:${i++}`} />
+              <text class="title" x={b.x + b.w / 2} y={b.y + v.size.title + 10} font-size={v.size.title} text-anchor="middle" style={`--i:${i}`}>
+                {b.title.map((t, j) => <tspan x={b.x + b.w / 2} dy={j ? v.size.title * 1.15 : 0}>{t}</tspan>)}
+              </text>
+              <text class="sub" x={b.x + b.w / 2} y={b.y + v.size.title + 14 + b.title.length * v.size.title * 1.15} font-size={v.size.sub} text-anchor="middle" style={`--i:${i}`}>
+                {b.sub.map((t, j) => <tspan x={b.x + b.w / 2} dy={j ? v.size.sub * 1.2 : 0}>{t}</tspan>)}
+              </text>
+            </g>
+          ))}
+          {v.arrows.map((a) => (
+            <path class:list={['draw', 'arrow', { red: a.red }]} d={`${a.d} ${head(a.end, a.angle)}`} style={`--i:${a.red ? i + 2 : i++}`} />
+          ))}
+          <text class="note" x={v.note.x} y={v.note.y} font-size={v.size.note} text-anchor={v.key === 'wide' ? 'middle' : 'start'} style={`--i:${i + 3}`}>
+            {v.note.lines.map((t, j) => <tspan x={v.note.x} dy={j ? v.size.note * 1.2 : 0}>{t}</tspan>)}
+          </text>
+        </svg>
+      );
+    })}
+  </figure>
+</section>
+
+<script>
+  // Draw the pipeline once it scrolls into view (skipped when motion is reduced)
+  const sheet = document.querySelector<HTMLElement>('[data-career]');
+  if (sheet && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    sheet.classList.add('armed');
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { io.disconnect(); sheet.classList.add('go'); }
+    }, { threshold: 0.35 });
+    io.observe(sheet);
+  }
+</script>
+
+<style>
+  .career { margin-top: clamp(64px, 10vw, 112px); display: grid; gap: 24px; }
+  .sheet { margin: 0; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .v-tall { display: none; }
+  @media (max-width: 640px) {
+    .v-wide { display: none; }
+    .v-tall { display: block; max-width: 420px; }
+  }
+
+  .draw { fill: none; stroke: var(--paper); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .arrow.red { stroke: var(--redline); stroke-width: 2.4; stroke-dasharray: 7 6; }
+  .title { font-family: var(--font-hand); font-weight: 700; fill: var(--paper); }
+  .sub { font-family: var(--font-hand); fill: var(--muted); }
+  .note { font-family: var(--font-hand); font-weight: 700; fill: var(--redline); }
+
+  /* the drawing, step by step */
+  .armed .draw:not(.red) { stroke-dasharray: 1000; stroke-dashoffset: 1000; }
+  .armed .red { opacity: 0; }
+  .armed text { opacity: 0; }
+  .armed.go .draw:not(.red) { stroke-dashoffset: 0; transition: stroke-dashoffset 0.7s ease-out calc(var(--i) * 0.28s); }
+  .armed.go .red { opacity: 1; transition: opacity 0.6s calc(var(--i) * 0.28s); }
+  .armed.go text { opacity: 1; transition: opacity 0.4s calc(var(--i) * 0.28s + 0.3s); }
+</style>

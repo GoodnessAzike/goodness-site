@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Placeholder from '../components/Placeholder.astro';
 import AboutTalk from '../components/AboutTalk.astro';
+import CareerPipeline from '../components/CareerPipeline.astro';
 import { site } from '../data/site';
 import { themeSongs, favouriteQuote } from '../data/songs';
 
@@ -21,6 +22,7 @@ const stages = themeSongs
     </section>
 
     <section class="contact" aria-labelledby="contact-title">
+      <span class="stamp" aria-hidden="true">Open to work</span>
       <h2 id="contact-title">Get in touch</h2>
       {site.openTo && <p class="open-to">{site.openTo}</p>}
       <ul>
@@ -38,6 +40,8 @@ const stages = themeSongs
       <a class="button cv" href={site.cv} download>Download my CV (PDF)</a>
     </section>
   </div>
+
+  <CareerPipeline />
 
   <AboutTalk />
 
@@ -61,7 +65,7 @@ const stages = themeSongs
     <ol class="stages">
       {stages.map((stage) => (
         <li class="stage">
-          <h3>{stage.stage}</h3>
+          <h3>{stage.stage}{stage.stage === 'Now' && <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>}</h3>
           <ul class="tracks">
             {stage.songs.map((t) => (
               <li class="track">
@@ -104,7 +108,19 @@ const stages = themeSongs
   @media (max-width: 760px) { .about { grid-template-columns: 1fr; } }
   .bio { display: grid; gap: 16px; font-size: 1.1875rem; }
 
-  .contact { border: 1px solid var(--line); background: var(--ink-raised); padding: 24px; display: grid; gap: 16px; justify-items: start; }
+  .contact { position: relative; border: 1px solid var(--line); background: var(--ink-raised); padding: 24px; display: grid; gap: 16px; justify-items: start; }
+  /* rubber stamp, slapped on slightly crooked */
+  .stamp {
+    position: absolute; top: -18px; right: -10px;
+    padding: 4px 12px 2px;
+    border: 3px double var(--redline);
+    color: var(--redline);
+    font-family: var(--font-display); font-weight: 800; font-size: 1.375rem; letter-spacing: 0.04em;
+    transform: rotate(8deg);
+    opacity: 0.9;
+    background: rgba(10, 26, 47, 0.6);
+    pointer-events: none;
+  }
   .contact h2 { font-size: 1.75rem; font-weight: 700; }
   .open-to { font-weight: 700; }
   .contact ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -112,11 +128,28 @@ const stages = themeSongs
 
   .outside { margin-top: clamp(64px, 10vw, 112px); display: grid; gap: 24px; }
   .outside ul {
-    list-style: none; margin: 0; padding: 0;
-    display: grid; gap: 0 40px;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+    list-style: none; margin: 0; padding: 8px 0 0;
+    display: grid; gap: 28px 24px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
   }
-  .outside li { border-top: 1px solid var(--line); padding: 16px 0 20px; }
+  /* taped notes, each a little crooked */
+  .outside li {
+    position: relative;
+    background: #fff4b8; color: #1f2328;
+    padding: 22px 18px 20px;
+    font-size: 1rem; line-height: 1.5;
+    box-shadow: 3px 5px 0 rgba(0, 0, 0, 0.25);
+    transform: rotate(-1.5deg);
+  }
+  .outside li:nth-child(2) { transform: rotate(1.2deg); background: #ffe3e0; }
+  .outside li:nth-child(3) { transform: rotate(-0.6deg); background: #e3f1ff; }
+  .outside li:nth-child(4) { transform: rotate(1.8deg); background: #e6f4d7; }
+  .outside li::before {
+    content: ''; position: absolute; top: -10px; left: 50%;
+    width: 70px; height: 20px; margin-left: -35px;
+    background: rgba(200, 210, 222, 0.75);
+    transform: rotate(-3deg);
+  }
   .aim { border-left: 3px solid var(--line); padding: 4px 0 4px 16px; color: var(--muted); font-style: italic; }
 
   .songs { margin-top: clamp(64px, 10vw, 112px); }
@@ -133,7 +166,15 @@ const stages = themeSongs
   }
   .stage:last-child { border-bottom: 1px solid var(--line); }
   @media (max-width: 640px) { .stage { grid-template-columns: 1fr; } }
-  .stage h3 { color: var(--muted); }
+  .stage h3 { color: var(--muted); display: flex; align-items: flex-end; align-self: start; gap: 10px; }
+  /* little "now playing" bars */
+  .eq { display: inline-flex; align-items: flex-end; gap: 3px; height: 18px; margin-bottom: 4px; }
+  .eq i { width: 4px; background: var(--signal); animation: eq 0.9s ease-in-out infinite alternate; }
+  .eq i:nth-child(1) { height: 40%; animation-delay: -0.3s; }
+  .eq i:nth-child(2) { height: 100%; animation-delay: -0.6s; }
+  .eq i:nth-child(3) { height: 65%; }
+  @keyframes eq { from { transform: scaleY(0.3); } to { transform: scaleY(1); } }
+  .eq i { transform-origin: bottom; }
 
   .tracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
   .track { display: grid; gap: 6px; }
