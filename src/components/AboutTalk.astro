@@ -1,34 +1,68 @@
 ---
-// About page talk: Goodness's own recording, with photos that change as she speaks.
-// Everything comes from `talk` in src/data/site.ts. Until the audio is added, a placeholder shows.
+// About page talk, played like a short film: letterbox, a 3-2-1 leader, a title card,
+// photos with slow camera moves, subtitles, and an end card.
+// Everything comes from `talk` in src/data/site.ts. Hidden on the live site until the
+// recording and photos are added (a placeholder shows while working locally).
 import { site } from '../data/site';
 import Placeholder from './Placeholder.astro';
 
 const { audio, slides, transcript } = site.talk;
+const captions = (site.talk as { captions?: { at: number; text: string }[] }).captions ?? [];
 const ready = Boolean(audio) && slides.length > 0;
-// On the live site, the section only appears once the recording and photos are added
 const visible = ready || import.meta.env.DEV;
+// Alternate the camera moves so each photo feels different
+const moves = ['in-left', 'out-right', 'in-up', 'out-down'];
 ---
 {visible && (
 <section class="talk" aria-labelledby="talk-title">
   <h2 id="talk-title">In my own voice</h2>
 
   {ready ? (
-    <figure class="player" data-talk>
-      <div class="stage">
+    <figure class="film" data-film>
+      <div class="screen">
         {slides.map((s, i) => (
-          <img class:list={['slide', { on: i === 0 }]} src={s.src} alt={s.alt} data-at={s.at} loading={i === 0 ? 'eager' : 'lazy'} />
+          <div class:list={['shot', moves[i % moves.length]]} data-at={s.at}>
+            <img src={s.src} alt={s.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+          </div>
         ))}
-        <button type="button" class="big-play" data-play aria-label="Play">
+
+        <div class="caption" aria-hidden="true" data-caption></div>
+
+        <!-- cold open: 3, 2, 1 leader, then the title card -->
+        <div class="leader" aria-hidden="true" data-leader>
+          <svg viewBox="0 0 100 100"><circle class="ring" cx="50" cy="50" r="40" /><path class="sweep" d="M50 50 L50 10 A40 40 0 1 1 49.99 10 Z" /></svg>
+          <span data-count>3</span>
+        </div>
+        <div class="titlecard" aria-hidden="true" data-title>
+          <p class="t-name">{site.name}</p>
+          <p class="t-line">{site.tagline}</p>
+        </div>
+
+        <!-- end card -->
+        <div class="endcard" data-end>
+          <p class="e-line">{site.openTo}</p>
+          <div class="e-actions">
+            {site.linkedin && <a class="button" href={site.linkedin} target="_blank" rel="noopener">LinkedIn</a>}
+            <a class="button" href={site.cv} download>Download my CV</a>
+            <button type="button" class="button" data-again>Watch again</button>
+          </div>
+        </div>
+
+        <button type="button" class="big-play" data-play aria-label="Play the film">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
         </button>
+        <i class="bar top" aria-hidden="true"></i><i class="bar bottom" aria-hidden="true"></i>
       </div>
-      <div class="bar">
+
+      <div class="controls">
         <button type="button" class="ctl" data-toggle>Play</button>
         <input type="range" min="0" max="100" step="0.1" value="0" aria-label="Position" data-seek />
         <span class="time" data-time>0:00</span>
+        {captions.length > 0 && <button type="button" class="ctl small" data-cc aria-pressed="true">CC</button>}
+        <button type="button" class="ctl small" data-full aria-label="Full screen">⛶</button>
       </div>
-      <audio src={audio} preload="metadata" data-audio></audio>
+      <audio src={audio} preload="metadata" data-audio data-captions={JSON.stringify(captions)}></audio>
+
       {transcript && (
         <details class="transcript">
           <summary>Read the transcript</summary>
@@ -46,34 +80,86 @@ const visible = ready || import.meta.env.DEV;
 
 <script>
   import { unlockAudio } from '../scripts/unlock-audio';
-  const root = document.querySelector<HTMLElement>('[data-talk]');
-  if (root) {
-    const audio = root.querySelector<HTMLAudioElement>('[data-audio]')!;
-    const slides = Array.from(root.querySelectorAll<HTMLImageElement>('.slide'));
-    const toggle = root.querySelector<HTMLButtonElement>('[data-toggle]')!;
-    const big = root.querySelector<HTMLButtonElement>('[data-play]')!;
-    const seek = root.querySelector<HTMLInputElement>('[data-seek]')!;
-    const time = root.querySelector<HTMLElement>('[data-time]')!;
+
+  const film = document.querySelector<HTMLElement>('[data-film]');
+  if (film) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const $ = <T extends Element>(sel: string) => film.querySelector<T>(sel)!;
+    const audio = $<HTMLAudioElement>('[data-audio]');
+    const shots = Array.from(film.querySelectorAll<HTMLElement>('.shot'));
+    const caption = $<HTMLElement>('[data-caption]');
+    const leader = $<HTMLElement>('[data-leader]');
+    const count = $<HTMLElement>('[data-count]');
+    const title = $<HTMLElement>('[data-title]');
+    const seek = $<HTMLInputElement>('[data-seek]');
+    const time = $<HTMLElement>('[data-time]');
+    const toggle = $<HTMLButtonElement>('[data-toggle]');
+    const cc = film.querySelector<HTMLButtonElement>('[data-cc]');
+    const captions: { at: number; text: string }[] = JSON.parse(audio.dataset.captions || '[]');
     const fmt = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    let opened = false; // the cold open plays once per visit
+    let opening = false;
+    let ccOn = true;
+
+    const setState = (s: 'idle' | 'opening' | 'playing' | 'paused' | 'ended') => {
+      film.dataset.state = s;
+      toggle.textContent = s === 'playing' || s === 'opening' ? 'Pause' : 'Play';
+    };
+    setState('idle');
 
     const show = (t: number) => {
       let idx = 0;
-      slides.forEach((s, i) => { if (t >= Number(s.dataset.at)) idx = i; });
-      slides.forEach((s, i) => s.classList.toggle('on', i === idx));
-    };
-    const sync = () => {
-      const playing = !audio.paused;
-      root.classList.toggle('playing', playing);
-      toggle.textContent = playing ? 'Pause' : 'Play';
-      big.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+      shots.forEach((s, i) => { if (t >= Number(s.dataset.at)) idx = i; });
+      shots.forEach((s, i) => s.classList.toggle('on', i === idx));
+      let line = '';
+      captions.forEach((c) => { if (t >= c.at) line = c.text; });
+      const rolling = film.dataset.state === 'playing' || film.dataset.state === 'paused';
+      caption.textContent = ccOn && rolling ? line : '';
     };
 
-    const flip = () => { unlockAudio(); return audio.paused ? audio.play() : audio.pause(); };
-    toggle.addEventListener('click', flip);
-    big.addEventListener('click', flip);
-    audio.addEventListener('play', sync);
-    audio.addEventListener('pause', sync);
-    audio.addEventListener('ended', () => { sync(); });
+    const coldOpen = async () => {
+      opening = true;
+      setState('opening');
+      if (!reduce) {
+        film.classList.add('letterbox');
+        leader.classList.add('run');
+        for (const n of ['3', '2', '1']) { count.textContent = n; leader.classList.remove('tick'); void leader.offsetWidth; leader.classList.add('tick'); await sleep(900); }
+        leader.classList.remove('run');
+      }
+      title.classList.add('show');
+      await sleep(reduce ? 1200 : 2400);
+      title.classList.remove('show');
+      await sleep(reduce ? 0 : 500);
+      opening = false;
+      opened = true;
+    };
+
+    const play = async () => {
+      unlockAudio();
+      if (film.dataset.state === 'ended') { audio.currentTime = 0; }
+      if (!opened && !opening) {
+        await coldOpen();
+      }
+      film.classList.add('letterbox');
+      await audio.play();
+    };
+    const pause = () => audio.pause();
+
+    $<HTMLButtonElement>('[data-play]').addEventListener('click', play);
+    toggle.addEventListener('click', () => (audio.paused && !opening ? play() : pause()));
+    $<HTMLButtonElement>('[data-again]').addEventListener('click', () => { opened = false; audio.currentTime = 0; play(); });
+    cc?.addEventListener('click', () => { ccOn = !ccOn; cc.setAttribute('aria-pressed', String(ccOn)); show(audio.currentTime); });
+    $<HTMLButtonElement>('[data-full]').addEventListener('click', () => {
+      const el = $<HTMLElement>('.screen') as HTMLElement & { webkitRequestFullscreen?: () => void };
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (el.requestFullscreen) el.requestFullscreen();
+      else el.webkitRequestFullscreen?.();
+    });
+
+    audio.addEventListener('play', () => setState('playing'));
+    audio.addEventListener('pause', () => { if (!audio.ended) setState('paused'); });
+    audio.addEventListener('ended', () => { setState('ended'); caption.textContent = ''; });
     audio.addEventListener('timeupdate', () => {
       show(audio.currentTime);
       if (audio.duration) seek.value = String((audio.currentTime / audio.duration) * 100);
@@ -83,50 +169,118 @@ const visible = ready || import.meta.env.DEV;
     seek.addEventListener('input', () => {
       if (audio.duration) { audio.currentTime = (Number(seek.value) / 100) * audio.duration; show(audio.currentTime); }
     });
+    show(0);
   }
 </script>
 
 <style>
   .talk { margin-top: clamp(64px, 10vw, 112px); display: grid; gap: 20px; }
-  .player { margin: 0; display: grid; gap: 0; max-width: 760px; }
-  .stage {
+  .film { margin: 0; max-width: 860px; }
+
+  .screen {
     position: relative;
-    aspect-ratio: 4 / 3;
-    background: var(--ink-raised);
+    aspect-ratio: 16 / 9;
+    background: #000;
     border: 1px solid var(--line);
     overflow: hidden;
+    color: #fff;
   }
-  .slide {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%; object-fit: cover;
-    opacity: 0; transition: opacity 0.8s ease;
+  @media (max-width: 560px) { .screen { aspect-ratio: 4 / 5; } }
+  .screen:fullscreen { border: 0; aspect-ratio: auto; }
+
+  /* photos, each with a slow camera move */
+  .shot { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; }
+  .shot.on { opacity: 1; }
+  .shot img { width: 100%; height: 100%; object-fit: cover; transform-origin: center; }
+  [data-state='playing'] .shot.on img, [data-state='paused'] .shot.on img { animation: var(--move) 14s ease-out forwards; }
+  [data-state='paused'] .shot.on img { animation-play-state: paused; }
+  .in-left { --move: in-left; }
+  .out-right { --move: out-right; }
+  .in-up { --move: in-up; }
+  .out-down { --move: out-down; }
+  @keyframes in-left { from { transform: scale(1.02) translateX(1.5%); } to { transform: scale(1.14) translateX(-1.5%); } }
+  @keyframes out-right { from { transform: scale(1.16) translateX(-1.5%); } to { transform: scale(1.03) translateX(1.5%); } }
+  @keyframes in-up { from { transform: scale(1.03) translateY(1.5%); } to { transform: scale(1.15) translateY(-1.5%); } }
+  @keyframes out-down { from { transform: scale(1.15) translateY(-1.5%); } to { transform: scale(1.03) translateY(1.5%); } }
+
+  /* letterbox bars slide in when the film starts */
+  .bar { position: absolute; left: 0; right: 0; height: 9%; background: #000; z-index: 3; transform: scaleY(0); transition: transform 0.7s ease; }
+  .bar.top { top: 0; transform-origin: top; }
+  .bar.bottom { bottom: 0; transform-origin: bottom; }
+  .letterbox .bar { transform: scaleY(1); }
+
+  /* subtitles */
+  .caption {
+    position: absolute; left: 6%; right: 6%; bottom: 13%; z-index: 4;
+    text-align: center; font-size: clamp(0.9375rem, 2.2vw, 1.25rem); font-weight: 700; line-height: 1.4;
+    text-shadow: 0 1px 2px #000, 0 0 8px rgba(0, 0, 0, 0.9);
   }
-  .slide.on { opacity: 1; }
+
+  /* 3, 2, 1 leader */
+  .leader { position: absolute; inset: 0; z-index: 5; display: none; place-items: center; background: #0d0d0d; }
+  .leader.run { display: grid; }
+  .leader svg { position: absolute; width: min(46%, 260px); height: auto; }
+  .leader .ring { fill: none; stroke: rgba(242, 179, 61, 0.5); stroke-width: 1.5; }
+  .leader .sweep { fill: rgba(242, 179, 61, 0.16); transform-origin: 50px 50px; }
+  .leader.tick .sweep { animation: sweep 0.9s linear; }
+  @keyframes sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .leader span { position: relative; font-family: var(--font-display); font-weight: 800; font-size: clamp(4rem, 14vw, 8rem); color: var(--signal); }
+
+  /* title card */
+  .titlecard {
+    position: absolute; inset: 0; z-index: 5; display: grid; place-content: center; gap: 10px; text-align: center;
+    background: #000; opacity: 0; pointer-events: none; transition: opacity 0.6s ease;
+  }
+  .titlecard.show { opacity: 1; }
+  .t-name { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.5rem, 8vw, 5rem); line-height: 1; letter-spacing: 0.02em; }
+  .t-line { font-family: var(--font-hand); color: var(--redline); font-size: clamp(1.125rem, 3vw, 1.625rem); }
+
+  /* end card */
+  .endcard {
+    position: absolute; inset: 0; z-index: 6; display: none; place-content: center; justify-items: center; gap: 20px; text-align: center;
+    padding: 24px; background: rgba(10, 26, 47, 0.92);
+  }
+  [data-state='ended'] .endcard { display: grid; animation: fade 0.8s ease both; }
+  .e-line { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.5rem, 4vw, 2.5rem); line-height: 1.1; max-width: 20ch; color: var(--paper); }
+  .e-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .e-actions .button { cursor: pointer; font: inherit; font-weight: 700; }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+  /* big play button over the first photo */
   .big-play {
-    position: absolute; inset: 0; margin: auto;
-    width: 84px; height: 84px; border-radius: 50%;
+    position: absolute; inset: 0; margin: auto; z-index: 7;
+    width: 92px; height: 92px; border-radius: 50%;
     border: 2px solid var(--paper); background: rgba(10, 26, 47, 0.7); color: var(--paper);
     display: grid; place-items: center; cursor: pointer;
-    transition: opacity 0.3s;
   }
-  .big-play svg { width: 34px; height: 34px; fill: currentColor; margin-left: 4px; }
-  .playing .big-play { opacity: 0; }
-  .playing .big-play:focus-visible { opacity: 1; }
+  .big-play svg { width: 36px; height: 36px; fill: currentColor; margin-left: 5px; }
+  .film:not([data-state='idle']) .big-play { display: none; }
 
-  .bar {
-    display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center;
+  .controls {
+    display: grid; grid-template-columns: auto 1fr auto auto auto; gap: 12px; align-items: center;
     border: 1px solid var(--line); border-top: 0; padding: 10px 14px;
   }
+  @media (max-width: 560px) {
+    .controls { grid-template-columns: auto 1fr auto auto; }
+    .controls input[type='range'] { grid-column: 1 / -1; grid-row: 1; }
+  }
   .ctl {
-    min-height: 44px; min-width: 84px; padding: 8px 14px;
+    min-height: 44px; min-width: 76px; padding: 8px 14px;
     border: 1.5px solid var(--line); background: transparent; color: var(--paper);
     font: inherit; font-size: 1rem; font-weight: 700; cursor: pointer;
   }
+  .ctl.small { min-width: 44px; padding: 8px 10px; }
+  .ctl[aria-pressed='false'] { opacity: 0.5; }
   .ctl:hover { border-color: var(--paper); }
   input[type='range'] { width: 100%; accent-color: var(--signal); }
   .time { color: var(--muted); font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
 
   .transcript { margin-top: 14px; }
   .transcript summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
-  .transcript p { margin-top: 10px; color: var(--paper); }
+  .transcript p { margin-top: 10px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shot.on img { animation: none !important; }
+    .bar { display: none; }
+  }
 </style>

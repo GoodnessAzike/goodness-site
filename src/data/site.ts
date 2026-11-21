@@ -51,6 +51,10 @@ export const site = {
       // { src: '/talk/2-diagram.jpg', alt: 'One of my pipeline drawings', at: 12 },
     ] as { src: string; alt: string; at: number }[],
     transcript: '', // TODO: what you say in the recording
+    // Subtitles: one line per sentence, with the second it starts
+    captions: [
+      // { at: 0, text: "Hi, I'm Goodness." },
+    ] as { at: number; text: string }[],
   },
   linkedin: 'https://www.linkedin.com/in/goodnessazike/',
   email: 'goodnessazike@gmail.com',
