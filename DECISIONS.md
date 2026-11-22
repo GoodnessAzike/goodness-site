@@ -51,3 +51,11 @@ Tim Urban, Wait But Why." Her green path runs through her real milestones (custo
 Verification Analyst, Team Lead, MSc joining in) to TODAY as a Data Engineer. Grey lines are
 paths closed to her. After TODAY the side starts empty and fills with green paths open to her.
 The old CareerPipeline component is kept in the repo, unused, in case she wants it back.
+
+## 2026-11-21: Glowing leaves for paths she has crossed
+On the life-paths drawing, four grey branches end in a glowing leaf, in time order before the bank
+(no years shown, to avoid age bias): Maths teacher (between schools, when she wrote her book),
+Food Technology (HND, Distinction), Supervisor at Shandee's Fastfood, Outbound telesales at IrokoTV.
+Tapping a leaf shows a short note that disappears after 5 seconds, so the drawing never gets
+cluttered. The one-sentence notes are drafts for her to edit. The key gains "paths I've crossed
+(tap a leaf)" and moves to the bottom-left on wide screens.

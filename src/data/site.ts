@@ -14,6 +14,14 @@ export const site = {
     'I got here from a customer-service desk at one of Nigeria\'s top banks, through Verification Analyst and Team Lead roles at Aiera, and an MSc in Data Science and AI at Leeds Trinity University (Distinction). That path taught me to trace every data problem back to the person it affects.',
     'The thread through all of it: the best systems, pipelines or classrooms, are designed for the people who were never meant to fit the default mold.',
   ],
+  // About page life-paths drawing: paths I've crossed, shown as glowing leaves (in time order, no years).
+  // Tap a leaf to show its note for 5 seconds. draft: true = wording still to edit (badge shows locally).
+  crossed: [
+    { title: 'Maths teacher', sub: 'between schools', line: 'Taught maths and wrote my book, DO IT YOURSELF MATHEMATICS.', link: '/books/do-it-yourself-mathematics.pdf', linkText: 'Read the book', draft: true },
+    { title: 'Food Technology', sub: 'HND, Distinction', line: 'Learned that quality is checked, not assumed.', draft: true },
+    { title: 'Supervisor', sub: "Shandee's Fastfood", line: 'Led a team through busy shifts and learned to stay calm under pressure.', draft: true },
+    { title: 'Outbound telesales', sub: 'IrokoTV', line: 'Called people every day and learned to listen before I speak.', draft: true },
+  ] as { title: string; sub: string; line: string; link?: string; linkText?: string; draft?: boolean }[],
   // Home page "How I think" strip.
   howIThink: {
     line: 'I look at what produces a problem, not only what is in front of me.',

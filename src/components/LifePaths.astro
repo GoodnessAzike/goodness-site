@@ -30,6 +30,21 @@ const milestones = [
   { at: [270, -22] as P, title: 'Verification Analyst', sub: 'Aiera', side: -1 },
   { at: [400, 16] as P, title: 'Team Lead', sub: 'Aiera', side: 1 },
 ];
+// Paths I've crossed: grey branches that end in a glowing leaf, in time order before the bank.
+import { site } from '../data/site';
+import DraftMark from './DraftMark.astro';
+const leafSpots: { origin: number; end: P }[] = [
+  { origin: 12, end: [40, -125] },
+  { origin: 30, end: [75, 112] },
+  { origin: 55, end: [115, -100] },
+  { origin: 90, end: [188, 122] },
+];
+const crossed = site.crossed.slice(0, leafSpots.length).map((c, i) => {
+  const { origin, end } = leafSpots[i];
+  const o: P = [origin, 0];
+  const mid: P = [(origin + end[0]) / 2 + 6, end[1] * 0.55];
+  return { ...c, branch: [o, mid, end] as P[], end };
+});
 // The MSc joins my path as a second line
 const msc: P[] = [[330, -150], [390, -120], [440, -60], [470, -8]];
 
@@ -96,7 +111,8 @@ const layouts = [
   { key: 'wide', viewBox: '0 0 1000 480', map: (p: P): P => [p[0], 240 + p[1]], fs: 15 },
   { key: 'tall', viewBox: '0 0 400 1040', map: (p: P): P => [200 + p[1] * 1.0, 60 + p[0] * 0.98], fs: 14 },
 ];
-const label = "How I got here, drawn as life paths: my path runs from a customer-service desk at one of Nigeria's top banks, to Verification Analyst and Team Lead at Aiera, with an MSc in Data Science and AI at Leeds Trinity joining in, to today as a Data Engineer at Aiera. Grey lines behind me are paths closed to me. After today, green lines branch out and fill the page: paths open to me.";
+const leafBranch = (b: P[]): P[] => [[b[0][0], onMine(b[0][0])], b[1], b[2]];
+const label = "How I got here, drawn as life paths: my path runs from a customer-service desk at one of Nigeria's top banks, to Verification Analyst and Team Lead at Aiera, with an MSc in Data Science and AI at Leeds Trinity joining in, to today as a Data Engineer at Aiera. Along the way, paths I've crossed: maths teacher, Food Technology (HND, Distinction), supervisor at Shandee's Fastfood, and outbound telesales at IrokoTV. Grey lines behind me are paths closed to me. After today, green lines branch out and fill the page: paths open to me.";
 ---
 <section class="paths" aria-labelledby="paths-title">
   <h2 id="paths-title">How I got here</h2>
@@ -106,12 +122,15 @@ const label = "How I got here, drawn as life paths: my path runs from a customer
       const [tx] = L.map([TODAY, 0]);
       const todayPt = L.map([TODAY, 0]);
       const wide = L.key === 'wide';
+      const [, , VW, VH] = L.viewBox.split(' ').map(Number);
       return (
-        <svg class={`v-${L.key}`} viewBox={L.viewBox} role="img" aria-label={label}>
+        <div class={`frame v-${L.key}`}>
+        <svg viewBox={L.viewBox} role="img" aria-label={label}>
           <!-- key -->
-          <g class="key" transform={wide ? 'translate(20 24)' : 'translate(16 16)'}>
+          <g class="key" transform={wide ? 'translate(20 400)' : 'translate(16 16)'}>
             <path class="closed" d="M0 6 H26" /><text class="k" x="34" y="11">paths closed to me</text>
             <path class="open-k" d="M0 28 H26" /><text class="k" x="34" y="33">paths open to me</text>
+            <circle class="leaf-k" cx="13" cy="50" r="5" /><text class="k" x="34" y="55">paths I've crossed (tap a leaf)</text>
           </g>
 
           <!-- TODAY -->
@@ -123,6 +142,9 @@ const label = "How I got here, drawn as life paths: my path runs from a customer
           <g class="closed-set">
             {closed.map((c, i) => <path class="closed" d={curve(c, L.map)} pathLength="1" style={`--i:${i}`} />)}
           </g>
+
+          <!-- paths I've crossed: grey branches out to each leaf -->
+          {crossed.map((c) => <path class="closed crossed" d={curve(leafBranch(c.branch), L.map)} pathLength="1" />)}
 
           <!-- my path, and the MSc joining it -->
           <path class="mine msc" d={curve(msc, L.map)} pathLength="1" />
@@ -162,6 +184,25 @@ const label = "How I got here, drawn as life paths: my path runs from a customer
             <text class="ms-t" x={wide ? todayPt[0] : todayPt[0] + 14} y={wide ? 462 : todayPt[1] + 26} text-anchor={wide ? 'middle' : 'start'} font-size={L.fs + 1}>Data Engineer, today</text>
           </g>
         </svg>
+        {crossed.map((c, i) => {
+          const [x, y] = L.map(c.end);
+          const left = (x / VW) * 100, top = (y / VH) * 100;
+          const id = `leaf-${L.key}-${i}`;
+          return (
+            <div class:list={['leaf', { below: top < 50, right: left > 55 }]} style={`left:${left}%; top:${top}%`}>
+              <button type="button" class="leaf-btn" aria-expanded="false" aria-controls={id} data-leaf>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 C 5 9, 11 4, 20 4 C 20 13, 15 19, 5 19 Z M5 19 L13 11" /></svg>
+                <span class="visually-hidden">{c.title}</span>
+              </button>
+              <div class="leaf-card" id={id} role="status" hidden>
+                <p class="lc-title">{c.title}<span class="lc-sub">{c.sub}</span></p>
+                <p class="lc-line">{c.line}{c.draft && <DraftMark />}</p>
+                {c.link && <a class="lc-link" href={c.link}>{c.linkText ?? 'See more'}</a>}
+              </div>
+            </div>
+          );
+        })}
+        </div>
       );
     })}
     <figcaption>Drawing inspired by Tim Urban, Wait But Why.</figcaption>
@@ -169,6 +210,32 @@ const label = "How I got here, drawn as life paths: my path runs from a customer
 </section>
 
 <script>
+  // Leaves: tap to show the note, it hides again after 5 seconds. One note at a time.
+  let openLeaf: { btn: HTMLButtonElement; card: HTMLElement; timer: number } | null = null;
+  const closeLeaf = () => {
+    if (!openLeaf) return;
+    window.clearTimeout(openLeaf.timer);
+    openLeaf.card.hidden = true;
+    openLeaf.btn.setAttribute('aria-expanded', 'false');
+    openLeaf.btn.closest('.leaf')!.classList.remove('is-open');
+    openLeaf = null;
+  };
+  document.querySelectorAll<HTMLButtonElement>('[data-leaf]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = document.getElementById(btn.getAttribute('aria-controls')!)!;
+      const same = openLeaf?.btn === btn;
+      closeLeaf();
+      if (same) return;
+      card.hidden = false;
+      btn.setAttribute('aria-expanded', 'true');
+      btn.closest('.leaf')!.classList.add('is-open');
+      openLeaf = { btn, card, timer: window.setTimeout(closeLeaf, 5000) };
+    });
+  });
+  document.addEventListener('click', (e) => { if (openLeaf && !openLeaf.card.contains(e.target as Node)) closeLeaf(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLeaf(); });
+
   // Draw it once it scrolls into view: my path first, then the open paths fill up
   const sheet = document.querySelector<HTMLElement>('[data-paths]');
   if (sheet && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -184,6 +251,7 @@ const label = "How I got here, drawn as life paths: my path runs from a customer
   .paths { margin-top: clamp(64px, 10vw, 112px); display: grid; gap: 20px; }
   .sheet { margin: 0; --open-c: #8fd694; }
   svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .frame { position: relative; }
   .v-tall { display: none; }
   @media (max-width: 640px) {
     .v-wide { display: none; }
@@ -192,6 +260,43 @@ const label = "How I got here, drawn as life paths: my path runs from a customer
   figcaption { margin-top: 10px; font-size: 0.875rem; color: var(--muted); font-style: italic; }
 
   .closed { fill: none; stroke: #4d6079; stroke-width: 1.6; stroke-linecap: round; }
+  .crossed { stroke: #6f86a3; stroke-width: 2; }
+  .leaf-k { fill: #d8f59a; filter: drop-shadow(0 0 4px #d8f59a); }
+
+  /* glowing leaves: paths I've crossed */
+  .leaf { position: absolute; transform: translate(-50%, -50%); z-index: 2; }
+  .leaf.is-open { z-index: 5; }
+  .leaf-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: rgba(216, 245, 154, 0.08); border: 0; cursor: pointer; color: #d8f59a;
+    animation: glow 2.4s ease-in-out infinite;
+  }
+  .leaf-btn svg { width: 22px; height: 22px; fill: rgba(216, 245, 154, 0.25); stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+  .leaf:nth-child(odd) .leaf-btn { animation-delay: -1.2s; }
+  .leaf.is-open .leaf-btn { background: rgba(216, 245, 154, 0.25); animation: none; box-shadow: 0 0 0 2px #d8f59a; }
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 6px 1px rgba(216, 245, 154, 0.35); }
+    50% { box-shadow: 0 0 18px 6px rgba(216, 245, 154, 0.55); }
+  }
+  .leaf-card {
+    position: absolute; left: 50%; bottom: calc(100% + 10px); transform: translateX(-50%);
+    width: max-content; max-width: min(280px, 78vw);
+    background: #f2ead8; color: #1f2328; padding: 12px 14px;
+    box-shadow: 4px 6px 0 rgba(0, 0, 0, 0.35);
+    display: grid; gap: 4px; text-align: left;
+    animation: pop-in 0.25s ease-out;
+  }
+  .leaf.below .leaf-card { bottom: auto; top: calc(100% + 10px); }
+  .leaf.right .leaf-card { left: auto; right: -10px; transform: none; }
+  .leaf:not(.right) .leaf-card { left: -10px; transform: none; }
+  .leaf-card[hidden] { display: none; }
+  .lc-title { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; line-height: 1.05; display: grid; }
+  .lc-sub { font-family: var(--font-hand); font-weight: 700; font-size: 0.9375rem; color: #b23b2e; }
+  .lc-line { font-size: 0.9375rem; line-height: 1.45; }
+  .lc-link { color: #1f2328; font-weight: 700; font-size: 0.9375rem; text-decoration-color: #b23b2e; }
+  @keyframes pop-in { from { opacity: 0; transform: translateY(4px) scale(0.97); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .leaf-btn { animation: none; box-shadow: 0 0 10px 3px rgba(216, 245, 154, 0.45); } .leaf-card { animation: none; } }
   .open { fill: none; stroke: var(--open-c); stroke-width: 1.6; stroke-linecap: round; opacity: 0.85; }
   .open-k { fill: none; stroke: var(--open-c); stroke-width: 2.4; }
   .mine { fill: none; stroke: var(--open-c); stroke-width: 3.6; stroke-linecap: round; }
