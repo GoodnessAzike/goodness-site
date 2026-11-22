@@ -1,0 +1,217 @@
+---
+// "How I got here", drawn as life paths (inspired by Tim Urban, Wait But Why).
+// My path winds through my real milestones to TODAY. Grey lines behind are paths closed to me.
+// After TODAY the side starts empty and fills up with green paths open to me.
+// Everything is drawn in "flow space" (t = along time, s = across), then mapped to a wide
+// layout (time runs left to right) or a tall one for phones (time runs top to bottom).
+
+type P = [number, number]; // [t, s]
+
+// Small seeded random so the drawing is the same on every build
+function rng(seed: number) {
+  return () => {
+    seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+    let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const TODAY = 560;
+const END = 990;
+const S_MAX = 175;
+// soft bounds: lines ease back before the edge instead of running flat along it
+const clamp = (v: number) => (Math.abs(v) > S_MAX * 0.8 ? Math.sign(v) * (S_MAX * 0.8 + (Math.abs(v) - S_MAX * 0.8) * 0.3) : v);
+
+// My path, through the milestones (from my bio)
+const mine: P[] = [[10, 0], [70, 18], [130, 30], [200, 8], [270, -22], [340, -4], [400, 16], [470, -8], [520, 4], [TODAY, 0]];
+const milestones = [
+  { at: [130, 30] as P, title: 'Customer-service desk', sub: "one of Nigeria's top banks", side: 1 },
+  { at: [270, -22] as P, title: 'Verification Analyst', sub: 'Aiera', side: -1 },
+  { at: [400, 16] as P, title: 'Team Lead', sub: 'Aiera', side: 1 },
+];
+// The MSc joins my path as a second line
+const msc: P[] = [[330, -150], [390, -120], [440, -60], [470, -8]];
+
+// Point on my path at time t (straight-line between points is close enough for branching)
+const onMine = (t: number): number => {
+  for (let i = 1; i < mine.length; i++) {
+    const [t0, s0] = mine[i - 1], [t1, s1] = mine[i];
+    if (t <= t1) return s0 + ((s1 - s0) * (t - t0)) / (t1 - t0);
+  }
+  return 0;
+};
+
+// Grey: paths closed to me. They branch off my path and get cut off at TODAY.
+const r1 = rng(7);
+const closed: P[][] = [];
+for (let i = 0; i < 18; i++) {
+  const t0 = 30 + r1() * 440;
+  const pts: P[] = [[t0, onMine(t0)]];
+  let t = t0, s = onMine(t0), drift = (r1() < 0.5 ? -1 : 1) * (18 + r1() * 30);
+  while (t < TODAY - 10) {
+    t = Math.min(TODAY - 4, t + 35 + r1() * 45);
+    s = clamp(s + drift + (r1() - 0.5) * 40);
+    drift *= 0.75;
+    pts.push([t, s]);
+  }
+  closed.push(pts);
+}
+
+// Green: paths open to me. Many lines leave TODAY and wander out to spread-out ends.
+// Lines heading to the middle are drawn first, the outer ones last, so the side fills up.
+const r2 = rng(21);
+type Seg = { pts: P[]; depth: number };
+const open: Seg[] = [];
+const N_OPEN = 30;
+for (let i = 0; i < N_OPEN; i++) {
+  const target = -165 + (330 * (i + r2() * 0.8)) / N_OPEN;
+  const pts: P[] = [[TODAY, 0]];
+  let t = TODAY, s = 0;
+  const steps = 6 + Math.floor(r2() * 3);
+  for (let j = 1; j <= steps; j++) {
+    t = TODAY + ((END - TODAY) * j) / steps + (j < steps ? (r2() - 0.5) * 20 : 0);
+    const pull = Math.pow(j / steps, 0.7);
+    s = target * pull + Math.sin(j * 1.7 + i) * 14 * (1 - pull * 0.5) + (r2() - 0.5) * 16;
+    pts.push([t, s]);
+  }
+  // how far from the middle this line ends decides when it draws: middle first, edges last
+  open.push({ pts, depth: Math.round((Math.abs(target) / 170) * 4) });
+}
+
+// Smooth curve through points (Catmull-Rom to cubic Bezier), given a mapping to x/y
+function curve(pts: P[], map: (p: P) => P) {
+  const m = pts.map(map);
+  let d = `M${m[0][0].toFixed(1)} ${m[0][1].toFixed(1)}`;
+  for (let i = 0; i < m.length - 1; i++) {
+    const p0 = m[i - 1] ?? m[i], p1 = m[i], p2 = m[i + 1], p3 = m[i + 2] ?? p2;
+    const c1: P = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2: P = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += ` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)}, ${c2[0].toFixed(1)} ${c2[1].toFixed(1)}, ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+  }
+  return d;
+}
+
+const layouts = [
+  { key: 'wide', viewBox: '0 0 1000 480', map: (p: P): P => [p[0], 240 + p[1]], fs: 15 },
+  { key: 'tall', viewBox: '0 0 400 1040', map: (p: P): P => [200 + p[1] * 1.0, 60 + p[0] * 0.98], fs: 14 },
+];
+const label = "How I got here, drawn as life paths: my path runs from a customer-service desk at one of Nigeria's top banks, to Verification Analyst and Team Lead at Aiera, with an MSc in Data Science and AI at Leeds Trinity joining in, to today as a Data Engineer at Aiera. Grey lines behind me are paths closed to me. After today, green lines branch out and fill the page: paths open to me.";
+---
+<section class="paths" aria-labelledby="paths-title">
+  <h2 id="paths-title">How I got here</h2>
+
+  <figure class="sheet" data-paths>
+    {layouts.map((L) => {
+      const [tx] = L.map([TODAY, 0]);
+      const todayPt = L.map([TODAY, 0]);
+      const wide = L.key === 'wide';
+      return (
+        <svg class={`v-${L.key}`} viewBox={L.viewBox} role="img" aria-label={label}>
+          <!-- key -->
+          <g class="key" transform={wide ? 'translate(20 24)' : 'translate(16 16)'}>
+            <path class="closed" d="M0 6 H26" /><text class="k" x="34" y="11">paths closed to me</text>
+            <path class="open-k" d="M0 28 H26" /><text class="k" x="34" y="33">paths open to me</text>
+          </g>
+
+          <!-- TODAY -->
+          {wide
+            ? <g class="today"><line x1={tx} y1="40" x2={tx} y2="440" /><text x={tx} y="30" text-anchor="middle">TODAY</text></g>
+            : <g class="today"><line x1="10" y1={todayPt[1]} x2="390" y2={todayPt[1]} /><text x="380" y={todayPt[1] - 10} text-anchor="end">TODAY</text></g>}
+
+          <!-- paths closed to me -->
+          <g class="closed-set">
+            {closed.map((c, i) => <path class="closed" d={curve(c, L.map)} pathLength="1" style={`--i:${i}`} />)}
+          </g>
+
+          <!-- my path, and the MSc joining it -->
+          <path class="mine msc" d={curve(msc, L.map)} pathLength="1" />
+          <path class="mine" d={curve(mine, L.map)} pathLength="1" />
+
+          <!-- milestones -->
+          {milestones.map((m, i) => {
+            const [x, y] = L.map(m.at);
+            const lx = wide ? x : x + 14 * (m.side > 0 ? 1 : 1);
+            const ly = wide ? y + m.side * 30 + (m.side > 0 ? 6 : 0) : y;
+            return (
+              <g class="ms" style={`--i:${i}`}>
+                <circle cx={x} cy={y} r="5" />
+                <text class="ms-t" x={wide ? x : x + (m.side > 0 ? 16 : -16)} y={wide ? ly : y - 2} text-anchor={wide ? 'middle' : m.side > 0 ? 'start' : 'end'} font-size={L.fs}>{m.title}</text>
+                <text class="ms-s" x={wide ? x : x + (m.side > 0 ? 16 : -16)} y={wide ? ly + L.fs + 2 : y + L.fs} text-anchor={wide ? 'middle' : m.side > 0 ? 'start' : 'end'} font-size={L.fs - 2}>{m.sub}</text>
+              </g>
+            );
+          })}
+          {(() => {
+            const [x, y] = L.map(msc[0]);
+            return (
+              <g class="ms" style="--i:3">
+                <text class="ms-t" x={wide ? x - 10 : x + 10} y={wide ? y - 8 : y - 4} text-anchor={wide ? 'end' : 'start'} font-size={L.fs}>MSc Data Science and AI</text>
+                <text class="ms-s" x={wide ? x - 10 : x + 10} y={wide ? y + L.fs - 6 : y + L.fs - 2} text-anchor={wide ? 'end' : 'start'} font-size={L.fs - 2}>Leeds Trinity, Distinction</text>
+              </g>
+            );
+          })()}
+
+          <!-- paths open to me, filling up depth by depth -->
+          <g class="open-set">
+            {open.map((o) => <path class="open" d={curve(o.pts, L.map)} pathLength="1" style={`--d:${o.depth}`} />)}
+          </g>
+
+          <!-- me, today -->
+          <g class="now">
+            <circle cx={todayPt[0]} cy={todayPt[1]} r="7" />
+            <text class="ms-t" x={wide ? todayPt[0] : todayPt[0] + 14} y={wide ? 462 : todayPt[1] + 26} text-anchor={wide ? 'middle' : 'start'} font-size={L.fs + 1}>Data Engineer, today</text>
+          </g>
+        </svg>
+      );
+    })}
+    <figcaption>Drawing inspired by Tim Urban, Wait But Why.</figcaption>
+  </figure>
+</section>
+
+<script>
+  // Draw it once it scrolls into view: my path first, then the open paths fill up
+  const sheet = document.querySelector<HTMLElement>('[data-paths]');
+  if (sheet && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    sheet.classList.add('armed');
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { io.disconnect(); sheet.classList.add('go'); }
+    }, { threshold: 0.3 });
+    io.observe(sheet);
+  }
+</script>
+
+<style>
+  .paths { margin-top: clamp(64px, 10vw, 112px); display: grid; gap: 20px; }
+  .sheet { margin: 0; --open-c: #8fd694; }
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .v-tall { display: none; }
+  @media (max-width: 640px) {
+    .v-wide { display: none; }
+    .v-tall { display: block; max-width: 420px; }
+  }
+  figcaption { margin-top: 10px; font-size: 0.875rem; color: var(--muted); font-style: italic; }
+
+  .closed { fill: none; stroke: #4d6079; stroke-width: 1.6; stroke-linecap: round; }
+  .open { fill: none; stroke: var(--open-c); stroke-width: 1.6; stroke-linecap: round; opacity: 0.85; }
+  .open-k { fill: none; stroke: var(--open-c); stroke-width: 2.4; }
+  .mine { fill: none; stroke: var(--open-c); stroke-width: 3.6; stroke-linecap: round; }
+  .msc { stroke-width: 2.6; opacity: 0.85; }
+  .key .k { font-family: var(--font-hand); font-weight: 700; font-size: 14px; fill: var(--muted); }
+  .today line { stroke: var(--muted); stroke-width: 2; }
+  .today text { font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: 0.08em; fill: var(--muted); }
+  .ms circle { fill: var(--open-c); }
+  .ms-t { font-family: var(--font-hand); font-weight: 700; fill: var(--paper); }
+  .ms-s { font-family: var(--font-hand); fill: var(--muted); }
+  .now circle { fill: var(--open-c); stroke: var(--ink); stroke-width: 3; }
+  .now .ms-t { fill: var(--open-c); }
+
+  /* the drawing: closed paths fade in, my path draws, then the future fills up */
+  .armed .closed-set .closed, .armed .ms, .armed .now { opacity: 0; }
+  .armed .mine, .armed .open { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .armed.go .closed-set .closed { opacity: 1; transition: opacity 0.8s ease calc(var(--i) * 0.04s); }
+  .armed.go .mine { stroke-dashoffset: 0; transition: stroke-dashoffset 2.2s ease-in-out 0.6s; }
+  .armed.go .msc { transition-delay: 1.6s; transition-duration: 1s; }
+  .armed.go .ms { opacity: 1; transition: opacity 0.5s ease calc(0.9s + var(--i) * 0.45s); }
+  .armed.go .now { opacity: 1; transition: opacity 0.5s ease 2.8s; }
+  .armed.go .open { stroke-dashoffset: 0; transition: stroke-dashoffset 1.3s ease-out calc(3s + var(--d) * 0.6s); }
+</style>

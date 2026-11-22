@@ -43,3 +43,11 @@ Chosen over "Every project here is shipped" because both current projects are st
 The epigraph is set in the red-pen handwriting font, and every "dance" gently sways (still for
 reduced motion). Credit changed from "After Alan Watts" to "Inspired by Alan Watts, philosopher",
 because "After" read as if it were part of his name.
+
+## 2026-11-21: "How I got here" becomes a life-paths drawing
+Replaces the boxes-and-arrows career pipeline on About. Inspired by a Tim Urban (Wait But Why)
+drawing she shared, redrawn in the site's style, not copied, and credited "Drawing inspired by
+Tim Urban, Wait But Why." Her green path runs through her real milestones (customer-service desk,
+Verification Analyst, Team Lead, MSc joining in) to TODAY as a Data Engineer. Grey lines are
+paths closed to her. After TODAY the side starts empty and fills with green paths open to her.
+The old CareerPipeline component is kept in the repo, unused, in case she wants it back.
