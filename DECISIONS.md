@@ -80,3 +80,14 @@ The glowing leaves no longer sit on their own short stems near the start. Each o
 existing grey branch, spread across the whole past side of the drawing, clear of her path, the
 MSc line and every milestone label (on both the wide and phone layouts). They still run left to
 right in time order: Maths teacher, Food Technology, Supervisor, Outbound telesales.
+
+## 2026-11-21: Opening film rebuilt as a thriller opening, with our own score
+The About opening film now plays like a TV thriller opener (in our own style, nothing copied from
+any show): an amber typewriter line "The following events are real.", a seven-segment clock that
+ticks in the bottom letterbox bar, her childhood photo, a quad split screen of the paths she has
+crossed, fast cuts (bank desk, Verification Analyst, Team Lead), a three-way split of her photos,
+"Data Engineer." as the clock freezes, then a GOODNESS title slam with a screen shake.
+Original score made live in the browser with Web Audio (no audio files, nothing copyrighted):
+low hum, a heartbeat that speeds up, a tick each second, hits on every cut, two beeps when the
+clock freezes, and a boom on the title. It autoplays muted (browsers block autoplay sound);
+"Sound on" restarts it with the score. All wording is a draft for her to edit.

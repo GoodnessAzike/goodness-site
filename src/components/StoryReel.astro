@@ -1,75 +1,180 @@
 ---
-// About page opening: a 10-second silent "movie" about me. Letterbox, film grain, the baby photo
-// pushing in, quick title-card cuts through my milestones, then an end title. Plays once when it
-// scrolls into view; "Watch again" replays it. With reduced motion it shows the photo and end title.
+// About page opening film, thriller style (our own, nothing copied): a typewriter line, a ticking
+// seven-segment clock, my photo, a quad split screen, fast cuts, a three-way split, and a title slam.
+// Plays muted when it scrolls into view; "Sound on" adds the original score (src/scripts/reel-score.ts).
 import { site } from '../data/site';
 import DraftMark from './DraftMark.astro';
 
-const { beats, draft } = site.storyReel;
-const total = beats.reduce((n, b) => n + b.ms, 0);
-const story = beats.map((b) => b.lines.join(' ')).join(' ') + ` ${site.name}. ${site.tagline}`;
+const r = site.storyReel;
+const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+const story = [r.opener, r.photo.caption, ...r.quad.map((q) => `${q.title}, ${q.sub}.`), ...r.cuts, ...r.split.map((x) => x.label), r.final, `${site.name}. ${site.tagline}`].join(' ');
 ---
-<section class="reel-wrap" aria-label="A ten-second film about me">
+<section class="reel-wrap" aria-label="A short film about me">
   <div class="reel" data-reel data-state="idle" role="img" aria-label={story}>
-    {beats.map((b, i) => (
-      <div class:list={['beat', { photo: !!b.photo }]} data-beat={i} data-ms={b.ms} aria-hidden="true" style={b.ratio ? `--ar:${b.ratio.toFixed(3)}` : undefined}>
-        {b.photo && (
-          <>
-            <img class="ph-bg" src={b.photo} alt="" />
-            <span class="print"><img src={b.photo} alt="" /></span>
-          </>
-        )}
-        <div class="cap">
-          {b.lines.map((l, j) => <p class:list={['l', `l${j}`]}>{l}</p>)}
-        </div>
-      </div>
-    ))}
-    <div class="beat endcard" data-end aria-hidden="true">
-      <p class="e-name">{site.name}</p>
-      <p class="e-line">{site.tagline}</p>
+    <!-- 1. typewriter line -->
+    <div class="sc sc-open" data-sc="open" aria-hidden="true"><p class="type" data-type={r.opener}></p></div>
+
+    <!-- 2. the photo -->
+    <div class="sc sc-photo" data-sc="photo" aria-hidden="true">
+      <img class="ph-bg" src={r.photo.src} alt="" />
+      <span class="print"><img src={r.photo.src} alt="" /></span>
+      <p class="hand-cap">{r.photo.caption}</p>
     </div>
+
+    <!-- 3. quad split screen -->
+    <div class="sc sc-quad" data-sc="quad" aria-hidden="true">
+      {r.quad.map((q, i) => (
+        <div class="box" data-box={i}>
+          <span class="box-tag">{String(i + 1).padStart(2, '0')}</span>
+          <p class="box-title">{q.title}</p>
+          <p class="box-sub">{q.sub}</p>
+        </div>
+      ))}
+    </div>
+
+    <!-- 4. fast cuts -->
+    <div class="sc sc-cuts" data-sc="cuts" aria-hidden="true">
+      {r.cuts.map((c, i) => <p class="cut" data-cut={i}>{c}</p>)}
+    </div>
+
+    <!-- 5. three-way split -->
+    <div class="sc sc-split" data-sc="split" aria-hidden="true">
+      {r.split.map((x, i) => (
+        <figure class="panel" data-panel={i}>
+          <img src={x.src} alt="" loading="lazy" />
+          <figcaption>{x.label}</figcaption>
+        </figure>
+      ))}
+    </div>
+
+    <!-- 6. final line, 7. title -->
+    <div class="sc sc-final" data-sc="final" aria-hidden="true"><p class="final">{r.final}</p></div>
+    <div class="sc sc-title" data-sc="title" aria-hidden="true">
+      <p class="t-name">{site.name}</p>
+      <p class="t-line">{site.tagline}</p>
+    </div>
+
+    <!-- the clock, ticking over the scenes -->
+    <div class="clock" data-clock aria-hidden="true">
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <>
+          {i > 0 && i % 2 === 0 && <span class="colon"><i></i><i></i></span>}
+          <span class="dg">{segs.map((s) => <span class={`sg ${s}`}></span>)}</span>
+        </>
+      ))}
+    </div>
+
     <i class="grain" aria-hidden="true"></i>
     <i class="bar top" aria-hidden="true"></i><i class="bar bottom" aria-hidden="true"></i>
-    <button type="button" class="again" data-again hidden>Watch again</button>
+
+    <button type="button" class="ctl sound" data-sound aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path class="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /></svg>
+      <span data-sound-label>Sound on</span>
+    </button>
+    <button type="button" class="ctl play" data-play hidden>Play</button>
+    <button type="button" class="ctl again" data-again hidden>Watch again</button>
   </div>
-  {draft && <DraftMark />}
+  {r.draft && <DraftMark />}
   <p class="visually-hidden">{story}</p>
 </section>
 
 <script>
+  import { createReelScore } from '../scripts/reel-score';
+
   const reel = document.querySelector<HTMLElement>('[data-reel]');
   if (reel) {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const beats = Array.from(reel.querySelectorAll<HTMLElement>('[data-beat]'));
-    const end = reel.querySelector<HTMLElement>('[data-end]')!;
-    const again = reel.querySelector<HTMLButtonElement>('[data-again]')!;
-    let timers: number[] = [];
+    const score = createReelScore();
+    const $ = <T extends Element>(s: string) => reel.querySelector<T>(s)!;
+    const $$ = <T extends Element>(s: string) => Array.from(reel.querySelectorAll<T>(s));
+    const scenes = Object.fromEntries($$<HTMLElement>('[data-sc]').map((el) => [el.dataset.sc!, el]));
+    const typeEl = $<HTMLElement>('[data-type]');
+    const clock = $<HTMLElement>('[data-clock]');
+    const digits = $$<HTMLElement>('.dg');
+    const soundBtn = $<HTMLButtonElement>('[data-sound]');
+    const soundLabel = $<HTMLElement>('[data-sound-label]');
+    const playBtn = $<HTMLButtonElement>('[data-play]');
+    const againBtn = $<HTMLButtonElement>('[data-again]');
+    const MAP: Record<string, string> = { '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc', '5': 'afgcd', '6': 'afgedc', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg' };
+    const LENGTH = 18; // seconds, for the heartbeat speed-up
 
-    const show = (el: HTMLElement | null) => {
-      [...beats, end].forEach((b) => b.classList.toggle('on', b === el));
+    let timers: number[] = [];
+    let clockTimer = 0;
+    let soundOn = false;
+    const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
+    const show = (name: string | null) => Object.entries(scenes).forEach(([k, el]) => el.classList.toggle('on', k === name));
+    const paintClock = (secs: number) => {
+      const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+      const text = [h, m, s].map((n) => String(n).padStart(2, '0')).join('');
+      digits.forEach((d, i) => d.querySelectorAll<HTMLElement>('.sg').forEach((sg) => sg.classList.toggle('on', MAP[text[i]].includes(sg.classList[1]))));
     };
-    const play = () => {
+    const startClock = () => {
+      let secs = 0;
+      paintClock(0);
+      clock.classList.add('on');
+      clockTimer = window.setInterval(() => { secs++; paintClock(secs); score.tick(); }, 1000);
+    };
+    const stopClock = (freeze: boolean) => {
+      window.clearInterval(clockTimer);
+      clock.classList.toggle('frozen', freeze);
+      if (!freeze) clock.classList.remove('on');
+    };
+
+    const reset = () => {
       timers.forEach(clearTimeout); timers = [];
-      again.hidden = true;
-      reel.dataset.state = 'playing';
-      let t = 0;
-      beats.forEach((b) => {
-        timers.push(window.setTimeout(() => show(b), t));
-        t += Number(b.dataset.ms);
-      });
-      timers.push(window.setTimeout(() => { show(end); reel.dataset.state = 'ended'; }, t));
-      timers.push(window.setTimeout(() => { again.hidden = false; }, t + 1200));
+      stopClock(false);
+      clock.classList.remove('frozen');
+      $$('.box, .cut, .panel').forEach((el) => el.classList.remove('in'));
+      typeEl.textContent = '';
+      againBtn.hidden = true; playBtn.hidden = true;
     };
-    again.addEventListener('click', play);
+
+    const play = () => {
+      reset();
+      reel.dataset.state = 'playing';
+      if (soundOn) score.start(LENGTH);
+      // 1. typewriter line
+      show('open');
+      const text = typeEl.dataset.type || '';
+      [...text].forEach((_, i) => at(300 + i * 55, () => { typeEl.textContent = text.slice(0, i + 1); if (text[i] !== ' ') score.key(); }));
+      // 2. the photo, and the clock starts
+      at(2400, () => { show('photo'); score.hit(); startClock(); });
+      // 3. quad split, one box at a time
+      at(5200, () => show('quad'));
+      $$<HTMLElement>('.box').forEach((b, i) => at(5200 + i * 700, () => { b.classList.add('in'); score.hit(); }));
+      // 4. fast cuts
+      at(8800, () => show('cuts'));
+      $$<HTMLElement>('.cut').forEach((c, i, all) => at(8800 + i * 600, () => { all.forEach((x) => x.classList.remove('in')); c.classList.add('in'); score.hit(); }));
+      // 5. three-way split
+      at(10600, () => show('split'));
+      $$<HTMLElement>('.panel').forEach((p, i) => at(10600 + i * 700, () => { p.classList.add('in'); score.hit(); }));
+      // 6. final line, clock freezes
+      at(14200, () => { show('final'); stopClock(true); score.beeps(); });
+      // 7. title slam
+      at(15600, () => { show('title'); clock.classList.remove('on'); reel.classList.add('shake'); score.boom(); });
+      at(16300, () => reel.classList.remove('shake'));
+      at(17400, () => { reel.dataset.state = 'ended'; againBtn.hidden = false; });
+    };
+
+    soundBtn.addEventListener('click', () => {
+      soundOn = !soundOn;
+      soundBtn.setAttribute('aria-pressed', String(soundOn));
+      soundLabel.textContent = soundOn ? 'Sound off' : 'Sound on';
+      if (soundOn && reel.dataset.state === 'playing') score.start(LENGTH);
+      if (!soundOn) score.stop();
+      if (soundOn && reel.dataset.state !== 'playing') play(); // turning sound on replays with sound
+    });
+    againBtn.addEventListener('click', play);
+    playBtn.addEventListener('click', play);
+    // Stop the sound if the visitor leaves
+    document.addEventListener('visibilitychange', () => { if (document.hidden) score.stop(); });
 
     if (reduce) {
-      // no movement: the photo and the end title, side by side in time
-      beats[0]?.classList.add('on');
+      // no autoplay: show the title and a Play button
+      show('title');
       reel.dataset.state = 'still';
-      setTimeout(() => { show(end); again.hidden = true; }, 2500);
+      playBtn.hidden = false;
     } else {
-      show(beats[0] ?? null);
-      reel.dataset.state = 'idle';
       const io = new IntersectionObserver((entries) => {
         if (entries.some((e) => e.isIntersecting)) { io.disconnect(); play(); }
       }, { threshold: 0.5 });
@@ -81,91 +186,135 @@ const story = beats.map((b) => b.lines.join(' ')).join(' ') + ` ${site.name}. ${
 <style>
   .reel-wrap { margin: 0 0 clamp(40px, 7vw, 64px); display: grid; gap: 10px; justify-items: start; }
   .reel {
-    position: relative; width: 100%; max-width: 860px; aspect-ratio: 16 / 9;
-    background: #050505; overflow: hidden; color: #fff;
-    border: 1px solid var(--line);
+    position: relative; width: 100%; max-width: 900px; aspect-ratio: 16 / 9;
+    background: #050505; overflow: hidden; color: #fff; border: 1px solid var(--line);
+    --amber: #f2b33d;
   }
   @media (max-width: 560px) { .reel { aspect-ratio: 4 / 5; } }
+  .reel.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+  @keyframes shake { 10%, 90% { transform: translate(-1px, 0); } 20%, 80% { transform: translate(3px, 1px); } 30%, 50%, 70% { transform: translate(-5px, -1px); } 40%, 60% { transform: translate(5px, 1px); } }
 
-  .beat { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0; transition: opacity 0.18s linear; }
-  .beat.on { opacity: 1; }
-  .beat.photo { transition-duration: 0.9s; }
+  .sc { position: absolute; inset: 9% 0; opacity: 0; transition: opacity 0.12s linear; }
+  @media (max-width: 560px) { .bar { height: 10%; } .sc { inset: 10% 0; } .clock { height: 10%; } }
+  .sc.on { opacity: 1; }
 
-  /* the photo: an old print in the middle of the frame, over a soft blurred copy of itself */
-  .ph-bg {
-    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-    filter: sepia(0.4) blur(18px) brightness(0.45); transform: scale(1.2);
-  }
+  /* 1. typewriter */
+  .sc-open { display: grid; place-items: center; }
+  .type { font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: var(--amber); font-size: clamp(1rem, 2.6vw, 1.5rem); letter-spacing: 0.06em; min-height: 1.4em; }
+  .type::after { content: '▌'; animation: caret 0.8s steps(1) infinite; margin-left: 2px; }
+  @keyframes caret { 50% { opacity: 0; } }
+
+  /* 2. photo */
+  .ph-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: sepia(0.4) blur(18px) brightness(0.4); transform: scale(1.2); }
   .print {
-    position: absolute; left: 50%; top: 48%; height: 74%; aspect-ratio: var(--ar, 0.765);
-    background: #f1e9d8; padding: 1.6% 1.6% 4.5%;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
-    transform: translate(-50%, -50%) rotate(-2.5deg) scale(1);
+    position: absolute; left: 46%; top: 50%; height: 84%; aspect-ratio: 381 / 498;
+    background: #f1e9d8; padding: 1.4% 1.4% 4%; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+    transform: translate(-50%, -50%) rotate(-2.5deg);
   }
-  .print img { display: block; width: 100%; height: 100%; object-fit: cover; filter: sepia(0.3) contrast(1.05) brightness(0.92); }
-  .beat.photo.on .print { animation: push 3.4s ease-out forwards; }
-  @keyframes push {
-    from { transform: translate(-50%, -50%) rotate(-2.5deg) scale(1); }
-    to { transform: translate(-50%, -50%) rotate(-1deg) scale(1.12); }
-  }
-  /* on wide screens the caption sits beside the print, like a note written next to it */
-  @media (min-width: 561px) {
-    /* just right of the print, whatever its shape */
-    .beat.photo .cap {
-      position: absolute; left: calc(52% + 20.8% * var(--ar, 0.765)); bottom: 24%;
-      max-width: calc(46% - 20.8% * var(--ar, 0.765)); padding: 0; text-align: left; transform: rotate(-4deg);
-    }
-    .beat.photo .l { font-size: clamp(1.125rem, 2.4vw, 1.875rem); }
-  }
-  /* on tall phone screens the photo simply fills the frame */
+  .print img { display: block; width: 100%; height: 100%; object-fit: cover; filter: sepia(0.3) brightness(0.92); }
+  .sc-photo.on .print { animation: push 3s ease-out forwards; }
+  @keyframes push { to { transform: translate(-50%, -50%) rotate(-1deg) scale(1.1); } }
+  .hand-cap { position: absolute; left: 66%; bottom: 22%; font-family: var(--font-hand); font-weight: 700; color: #ffb3a8; font-size: clamp(1.125rem, 2.6vw, 2rem); transform: rotate(-4deg); }
   @media (max-width: 560px) {
-    .ph-bg { filter: sepia(0.35) contrast(1.05) brightness(0.85); transform: none; }
+    .ph-bg { filter: sepia(0.35) brightness(0.85); transform: none; }
     .print { display: none; }
-    .beat.photo.on .ph-bg { animation: push-fill 3.4s ease-out forwards; }
+    .hand-cap { left: 0; right: 0; bottom: 6%; text-align: center; transform: none; text-shadow: 0 2px 6px #000; }
   }
-  @keyframes push-fill { from { transform: scale(1.04); } to { transform: scale(1.16); } }
 
-  /* captions and title cards */
-  .cap { position: relative; z-index: 2; display: grid; gap: 4px; text-align: center; padding: 0 8%; }
-  .l { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.75rem, 5.4vw, 3.5rem); line-height: 1; letter-spacing: 0.01em; }
-  .l1 { color: var(--signal); }
-  .beat.on .l { animation: cut-in 0.35s ease-out both; }
-  .beat.on .l1 { animation-delay: 0.12s; }
-  @keyframes cut-in { from { opacity: 0; transform: translateY(8px); letter-spacing: 0.08em; } to { opacity: 1; transform: none; } }
-  /* the photo caption sits low, in red pen */
-  .beat.photo { place-items: end center; }
-  .beat.photo .cap { padding-bottom: 13%; }
-  .beat.photo .l { font-family: var(--font-hand); font-weight: 700; color: #ffb3a8; font-size: clamp(1.375rem, 3.6vw, 2.25rem); text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8); }
+  /* 3. quad split screen */
+  .sc-quad { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 4px; padding: 4px; background: #000; }
+  .box {
+    position: relative; background: #0d1622; border: 1px solid rgba(242, 179, 61, 0.35);
+    display: grid; place-content: center; text-align: center; gap: 4px; padding: 8px;
+    opacity: 0; transform: scale(0.96);
+  }
+  .box.in { opacity: 1; transform: none; transition: opacity 0.08s, transform 0.2s cubic-bezier(0.2, 1.4, 0.4, 1); }
+  .box-tag { position: absolute; top: 6px; left: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 0.75rem; color: var(--amber); }
+  .box-title { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.125rem, 3.2vw, 2.25rem); line-height: 1; }
+  .box-sub { font-family: var(--font-hand); font-weight: 700; color: var(--amber); font-size: clamp(0.875rem, 1.8vw, 1.25rem); }
 
-  .endcard { display: grid; place-content: center; gap: 8px; text-align: center; }
-  .e-name { font-family: var(--font-display); font-weight: 800; font-size: clamp(3rem, 10vw, 6rem); line-height: 0.95; }
-  .e-line { font-family: var(--font-hand); font-weight: 700; color: var(--redline); font-size: clamp(1.125rem, 3vw, 1.625rem); }
-  .endcard.on .e-name { animation: cut-in 0.6s ease-out both; }
-  .endcard.on .e-line { animation: cut-in 0.6s ease-out 0.4s both; }
+  /* 4. fast cuts */
+  .sc-cuts { display: grid; place-items: center; }
+  .cut { grid-area: 1 / 1; font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 6.5vw, 4.25rem); opacity: 0; }
+  .cut.in { opacity: 1; animation: slam 0.25s ease-out; }
+  @keyframes slam { from { transform: scale(1.25); letter-spacing: 0.06em; } to { transform: none; } }
 
-  /* film grain and letterbox */
+  /* 5. three-way split */
+  .sc-split { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: #000; }
+  @media (max-width: 560px) { .sc-split { grid-template-columns: 1fr; grid-template-rows: repeat(3, 1fr); } }
+  .panel { position: relative; margin: 0; overflow: hidden; border: 1px solid rgba(242, 179, 61, 0.35); opacity: 0; transform: translateY(8px); }
+  .panel.in { opacity: 1; transform: none; transition: opacity 0.1s, transform 0.25s ease-out; }
+  .panel img { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.05) saturate(0.85); }
+  .panel figcaption {
+    position: absolute; left: 0; right: 0; bottom: 0; padding: 8px 10px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+    font-family: var(--font-display); font-weight: 700; font-size: clamp(0.875rem, 1.7vw, 1.125rem); line-height: 1.15;
+  }
+
+  /* 6. final line, 7. title */
+  .sc-final { display: grid; place-items: center; }
+  .final { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.25rem, 7vw, 4.75rem); color: var(--amber); }
+  .sc-title { display: grid; place-content: center; gap: 10px; text-align: center; }
+  .t-name { font-family: var(--font-display); font-weight: 800; font-size: clamp(3.25rem, 12vw, 7rem); line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; }
+  .t-line { font-family: var(--font-hand); font-weight: 700; color: var(--redline); font-size: clamp(1.125rem, 3vw, 1.625rem); }
+  .sc-title.on .t-name { animation: title-in 0.5s cubic-bezier(0.2, 1.2, 0.4, 1) both; }
+  .sc-title.on .t-line { animation: fade-up 0.6s ease-out 0.5s both; }
+  @keyframes title-in { from { transform: scale(1.6); opacity: 0; filter: blur(6px); } to { transform: none; opacity: 1; filter: none; } }
+  @keyframes fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* the clock */
+  .clock {
+    /* sits in the bottom letterbox bar, so it never covers the picture */
+    position: absolute; z-index: 6; bottom: 0; height: 9%; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 4px;
+    opacity: 0; transition: opacity 0.2s;
+    --h: clamp(16px, 2.6vw, 26px); --t: calc(var(--h) * 0.12);
+  }
+  .clock.on { opacity: 1; }
+  .clock.frozen .dg { animation: blink 0.4s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0.25; } }
+  .dg { position: relative; width: calc(var(--h) * 0.56); height: var(--h); }
+  .sg { position: absolute; background: rgba(242, 179, 61, 0.1); }
+  .sg.on { background: var(--amber); box-shadow: 0 0 6px rgba(242, 179, 61, 0.5); }
+  .a, .g, .d { left: calc(var(--t) * 0.6); right: calc(var(--t) * 0.6); height: var(--t); clip-path: polygon(0 50%, 14% 0, 86% 0, 100% 50%, 86% 100%, 14% 100%); }
+  .a { top: 0; } .g { top: calc(50% - var(--t) / 2); } .d { bottom: 0; }
+  .b, .c, .e, .f { width: var(--t); height: calc(50% - var(--t) * 0.6); clip-path: polygon(50% 0, 100% 12%, 100% 88%, 50% 100%, 0 88%, 0 12%); }
+  .f { left: 0; top: calc(var(--t) * 0.55); } .b { right: 0; top: calc(var(--t) * 0.55); }
+  .e { left: 0; bottom: calc(var(--t) * 0.55); } .c { right: 0; bottom: calc(var(--t) * 0.55); }
+  .colon { display: flex; flex-direction: column; gap: calc(var(--h) * 0.22); }
+  .colon i { width: var(--t); height: var(--t); background: var(--amber); }
+
+  /* grain + letterbox */
   .grain {
-    position: absolute; inset: -50%; z-index: 3; pointer-events: none; opacity: 0.18;
+    position: absolute; inset: -50%; z-index: 4; pointer-events: none; opacity: 0.16;
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.9'/></svg>");
     animation: grain 0.5s steps(4) infinite;
   }
-  @keyframes grain { 0% { transform: translate(0, 0); } 25% { transform: translate(-4%, 3%); } 50% { transform: translate(3%, -5%); } 75% { transform: translate(-2%, 4%); } 100% { transform: translate(0, 0); } }
-  .bar { position: absolute; left: 0; right: 0; height: 9%; background: #000; z-index: 4; }
-  .bar.top { top: 0; }
-  .bar.bottom { bottom: 0; }
+  @keyframes grain { 25% { transform: translate(-4%, 3%); } 50% { transform: translate(3%, -5%); } 75% { transform: translate(-2%, 4%); } }
+  .bar { position: absolute; left: 0; right: 0; height: 9%; background: #000; z-index: 5; }
+  .bar.top { top: 0; } .bar.bottom { bottom: 0; }
 
-  .again {
-    position: absolute; z-index: 5; right: 14px; bottom: calc(9% + 12px);
-    min-height: 44px; padding: 8px 16px;
-    border: 1.5px solid rgba(255, 255, 255, 0.7); background: rgba(0, 0, 0, 0.5); color: #fff;
-    font: inherit; font-size: 0.9375rem; font-weight: 700; cursor: pointer;
+  /* buttons */
+  .ctl {
+    position: absolute; z-index: 7; min-height: 32px; padding: 4px 12px;
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1.5px solid rgba(255, 255, 255, 0.6); background: rgba(0, 0, 0, 0.55); color: #fff;
+    font: inherit; font-size: 0.875rem; font-weight: 700; cursor: pointer;
   }
-  .again[hidden] { display: none; }
-  .again:hover { background: #fff; color: #000; }
+  .ctl:hover { background: #fff; color: #000; }
+  .ctl[hidden] { display: none; }
+  /* buttons live in the letterbox bars too */
+  .sound { right: 10px; top: calc(4.5% - 16px); }
+  .sound svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .sound .waves { opacity: 0.3; }
+  .sound[aria-pressed='true'] { border-color: var(--amber); color: var(--amber); }
+  .sound[aria-pressed='true'] .waves { opacity: 1; }
+  .again, .play { right: 10px; bottom: calc(4.5% - 16px); }
+  @media (max-width: 560px) { .sound span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .grain { animation: none; }
-    .beat, .beat.photo { transition: none; }
-    .beat.photo.on .print, .beat.photo.on .ph-bg, .beat.on .l, .endcard.on .e-name, .endcard.on .e-line { animation: none; }
+    .grain, .type::after, .clock.frozen .dg { animation: none; }
+    .sc, .box, .panel { transition: none; }
+    .sc-photo.on .print, .cut.in, .sc-title.on .t-name, .sc-title.on .t-line, .reel.shake { animation: none; }
   }
 </style>

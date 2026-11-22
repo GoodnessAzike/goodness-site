@@ -14,21 +14,25 @@ export const site = {
     'I got here from a customer-service desk at one of Nigeria\'s top banks, through Verification Analyst and Team Lead roles at Aiera, and an MSc in Data Science and AI at Leeds Trinity University (Distinction). That path taught me to trace every data problem back to the person it affects.',
     'The thread through all of it: the best systems, pipelines or classrooms, are designed for the people who were never meant to fit the default mold.',
   ],
-  // About page opening: a 10-second silent "movie" about me. Each beat shows for `ms` milliseconds.
-  // A beat with `photo` shows that photo; otherwise it is a title card. draft: true = wording still to edit.
+  // About page opening film, thriller style: typewriter line, ticking clock, split screens, title slam.
+  // All wording is a draft for me to edit (draft: true shows a badge while working locally).
   storyReel: {
     draft: true,
-    beats: [
-      { ms: 3000, photo: '/talk/baby.jpg', ratio: 381 / 498, alt: 'Me as a little girl', lines: ['It started here.'] },
-      { ms: 1000, lines: ['Maths teacher.', 'Wrote a book.'] },
-      { ms: 1000, lines: ['Food Technology.', 'Distinction.'] },
-      { ms: 1000, lines: ['Supervisor. Telesales.', 'A bank desk.'] },
-      { ms: 1000, lines: ['Verification Analyst.', 'Team Lead.'] },
-      { ms: 2200, photo: '/talk/grad.jpg', ratio: 1400 / 1386, alt: 'Me giving a speech at my Leeds Trinity University graduation', lines: ['MSc Data Science and AI.', 'Distinction.'] },
-      { ms: 2000, photo: '/talk/poster.jpg', ratio: 964 / 1400, alt: 'Me next to my poster, Non-Linear Learning Journeys in Computing Education', lines: ['Presented at', 'BCSWomen Lovelace.'] },
-      { ms: 2000, photo: '/talk/teens.jpg', ratio: 1400 / 1392, alt: 'Me presenting the Sustainable Development Goals at Teens in AI', lines: ['Teens in AI,', 'London Chapter Lead.'] },
-      { ms: 1600, lines: ['Data Engineer.'] },
-    ] as { ms: number; photo?: string; ratio?: number; alt?: string; lines: string[] }[],
+    opener: 'The following events are real.',
+    photo: { src: '/talk/baby.jpg', alt: 'Me as a little girl', caption: 'It started here.' },
+    quad: [
+      { title: 'Maths teacher', sub: 'Wrote a book' },
+      { title: 'Food Technology', sub: 'HND, Distinction' },
+      { title: 'Supervisor', sub: "Shandee's Fastfood" },
+      { title: 'Outbound telesales', sub: 'IrokoTV' },
+    ],
+    cuts: ['A bank desk.', 'Verification Analyst.', 'Team Lead.'],
+    split: [
+      { src: '/talk/grad.jpg', alt: 'Me giving a speech at my Leeds Trinity University graduation', label: 'MSc Data Science and AI. Distinction.' },
+      { src: '/talk/poster.jpg', alt: 'Me next to my poster, Non-Linear Learning Journeys in Computing Education', label: 'Presented at BCSWomen Lovelace.' },
+      { src: '/talk/teens.jpg', alt: 'Me presenting the Sustainable Development Goals at Teens in AI', label: 'Teens in AI, London Chapter Lead.' },
+    ],
+    final: 'Data Engineer.',
   },
   // About page life-paths drawing: paths I've crossed, shown as glowing leaves (in time order, no years).
   // Tap a leaf to show its note for 5 seconds. draft: true = wording still to edit (badge shows locally).
