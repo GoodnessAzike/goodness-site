@@ -96,3 +96,10 @@ clock freezes, and a boom on the title. It autoplays muted (browsers block autop
 The layered score (hum, ticks, hits, beeps, boom) overlapped too much. The film now uses only a
 heartbeat: slow at first, speeding up as the film builds, and stopping dead the moment the
 GOODNESS title appears, so the title lands in silence.
+
+## 2026-11-21: Film sound: typing, heartbeat on the cuts, pen writing
+Opening line gets a typewriter key sound for every letter. The heartbeat now drives the pictures:
+the photo, each quad box, each cut, each split panel and the final line all land exactly on a
+heartbeat (pictures and sound follow one shared timeline). The heartbeat stops on the GOODNESS
+title, which lands in silence; then the tagline is written out by hand, left to right, with a
+pen-scribble sound in time with the writing.

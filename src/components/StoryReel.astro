@@ -1,7 +1,8 @@
 ---
 // About page opening film, thriller style (our own, nothing copied): a typewriter line, a ticking
 // seven-segment clock, my photo, a quad split screen, fast cuts, a three-way split, and a title slam.
-// Plays muted when it scrolls into view; "Sound on" adds a heartbeat (src/scripts/reel-score.ts).
+// Plays muted when it scrolls into view; "Sound on" adds typing, a heartbeat the pictures cut on,
+// and a pen writing the tagline (src/scripts/reel-score.ts).
 import { site } from '../data/site';
 import DraftMark from './DraftMark.astro';
 
@@ -96,7 +97,19 @@ const story = [r.opener, r.photo.caption, ...r.quad.map((q) => `${q.title}, ${q.
     const playBtn = $<HTMLButtonElement>('[data-play]');
     const againBtn = $<HTMLButtonElement>('[data-again]');
     const MAP: Record<string, string> = { '0': 'abcdef', '1': 'bc', '2': 'abged', '3': 'abgcd', '4': 'fgbc', '5': 'afgcd', '6': 'afgedc', '7': 'abc', '8': 'abcdefg', '9': 'abcdfg' };
-    const LENGTH = 18; // seconds, for the heartbeat speed-up
+    // ── One shared plan: the pictures and the sound both follow it, so they stay in time ──
+    const TYPE_START = 300, TYPE_STEP = 55;
+    const PHOTO_AT = 2400;
+    // Heartbeats from the photo onwards: about 1 per second at first, getting faster
+    const beats: number[] = [];
+    for (let t = PHOTO_AT; beats.length < 15; ) {
+      beats.push(Math.round(t));
+      t += 1000 - Math.min(1, (t - PHOTO_AT) / 11000) * 480;
+    }
+    // Which beat each moment lands on
+    const CUE = { photo: 0, boxes: [3, 4, 5, 6], cuts: [7, 8, 9], panels: [10, 11, 12], final: 13, title: 14 };
+    const TITLE_AT = beats[CUE.title];
+    const WRITE_AT = TITLE_AT + 700, WRITE_MS = 1500;
 
     let timers: number[] = [];
     let clockTimer = 0;
@@ -125,6 +138,8 @@ const story = [r.opener, r.photo.caption, ...r.quad.map((q) => `${q.title}, ${q.
       stopClock(false);
       clock.classList.remove('frozen');
       $$('.box, .cut, .panel').forEach((el) => el.classList.remove('in'));
+      scenes.title.classList.remove('writing');
+      score.stop(false);
       typeEl.textContent = '';
       againBtn.hidden = true; playBtn.hidden = true;
     };
@@ -132,37 +147,40 @@ const story = [r.opener, r.photo.caption, ...r.quad.map((q) => `${q.title}, ${q.
     const play = () => {
       reset();
       reel.dataset.state = 'playing';
-      if (soundOn) score.start(LENGTH);
+      const text = typeEl.dataset.type || '';
+      const keys = [...text].map((ch, i) => (ch === ' ' ? -1 : TYPE_START + i * TYPE_STEP)).filter((ms) => ms >= 0);
+      // the heartbeat stops on the title: no beat there, so the title lands in silence
+      if (soundOn) score.play({ keys, beats: beats.slice(0, CUE.title), scribble: [WRITE_AT, WRITE_MS] });
+
       // 1. typewriter line
       show('open');
-      const text = typeEl.dataset.type || '';
-      [...text].forEach((_, i) => at(300 + i * 55, () => { typeEl.textContent = text.slice(0, i + 1); }));
-      // 2. the photo, and the clock starts
-      at(2400, () => { show('photo'); startClock(); });
-      // 3. quad split, one box at a time
-      at(5200, () => show('quad'));
-      $$<HTMLElement>('.box').forEach((b, i) => at(5200 + i * 700, () => b.classList.add('in')));
-      // 4. fast cuts
-      at(8800, () => show('cuts'));
-      $$<HTMLElement>('.cut').forEach((c, i, all) => at(8800 + i * 600, () => { all.forEach((x) => x.classList.remove('in')); c.classList.add('in'); }));
-      // 5. three-way split
-      at(10600, () => show('split'));
-      $$<HTMLElement>('.panel').forEach((p, i) => at(10600 + i * 700, () => p.classList.add('in')));
-      // 6. final line, clock freezes
-      at(14200, () => { show('final'); stopClock(true); });
-      // 7. title slam
-      at(15600, () => { show('title'); clock.classList.remove('on'); reel.classList.add('shake'); score.titleHit(); });
-      at(16300, () => reel.classList.remove('shake'));
-      at(17400, () => { reel.dataset.state = 'ended'; againBtn.hidden = false; });
+      [...text].forEach((_, i) => at(TYPE_START + i * TYPE_STEP, () => { typeEl.textContent = text.slice(0, i + 1); }));
+      // 2. the photo on the first heartbeat, and the clock starts
+      at(beats[CUE.photo], () => { show('photo'); startClock(); });
+      // 3. quad split, one box per heartbeat
+      CUE.boxes.forEach((bi, i) => at(beats[bi], () => { if (i === 0) show('quad'); $$<HTMLElement>('.box')[i]?.classList.add('in'); }));
+      // 4. fast cuts, one per heartbeat
+      CUE.cuts.forEach((bi, i) => at(beats[bi], () => {
+        if (i === 0) show('cuts');
+        $$<HTMLElement>('.cut').forEach((x, j) => x.classList.toggle('in', j === i));
+      }));
+      // 5. three-way split, one panel per heartbeat
+      CUE.panels.forEach((bi, i) => at(beats[bi], () => { if (i === 0) show('split'); $$<HTMLElement>('.panel')[i]?.classList.add('in'); }));
+      // 6. final line on the last heartbeat, clock freezes
+      at(beats[CUE.final], () => { show('final'); stopClock(true); });
+      // 7. title in silence, then the tagline is written out by hand
+      at(TITLE_AT, () => { show('title'); clock.classList.remove('on'); reel.classList.add('shake'); });
+      at(TITLE_AT + 700, () => reel.classList.remove('shake'));
+      at(WRITE_AT, () => scenes.title.classList.add('writing'));
+      at(WRITE_AT + WRITE_MS + 600, () => { reel.dataset.state = 'ended'; againBtn.hidden = false; });
     };
 
     soundBtn.addEventListener('click', () => {
       soundOn = !soundOn;
       soundBtn.setAttribute('aria-pressed', String(soundOn));
       soundLabel.textContent = soundOn ? 'Sound off' : 'Sound on';
-      if (soundOn && reel.dataset.state === 'playing') score.start(LENGTH);
-      if (!soundOn) score.stop();
-      if (soundOn && reel.dataset.state !== 'playing') play(); // turning sound on replays with sound
+      if (soundOn) play(); // turning sound on starts the film again, in time with the sound
+      else score.stop();
     });
     againBtn.addEventListener('click', play);
     playBtn.addEventListener('click', play);
@@ -258,7 +276,9 @@ const story = [r.opener, r.photo.caption, ...r.quad.map((q) => `${q.title}, ${q.
   .t-name { font-family: var(--font-display); font-weight: 800; font-size: clamp(3.25rem, 12vw, 7rem); line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; }
   .t-line { font-family: var(--font-hand); font-weight: 700; color: var(--redline); font-size: clamp(1.125rem, 3vw, 1.625rem); }
   .sc-title.on .t-name { animation: title-in 0.5s cubic-bezier(0.2, 1.2, 0.4, 1) both; }
-  .sc-title.on .t-line { animation: fade-up 0.6s ease-out 0.5s both; }
+  /* the tagline is written out by hand, left to right */
+  .t-line { clip-path: inset(0 100% 0 0); }
+  .sc-title.writing .t-line { clip-path: inset(0 0 0 0); transition: clip-path 1.5s linear; }
   @keyframes title-in { from { transform: scale(1.6); opacity: 0; filter: blur(6px); } to { transform: none; opacity: 1; filter: none; } }
   @keyframes fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
@@ -315,6 +335,7 @@ const story = [r.opener, r.photo.caption, ...r.quad.map((q) => `${q.title}, ${q.
   @media (prefers-reduced-motion: reduce) {
     .grain, .type::after, .clock.frozen .dg { animation: none; }
     .sc, .box, .panel { transition: none; }
-    .sc-photo.on .print, .cut.in, .sc-title.on .t-name, .sc-title.on .t-line, .reel.shake { animation: none; }
+    .sc-photo.on .print, .cut.in, .sc-title.on .t-name, .reel.shake { animation: none; }
+    .t-line { clip-path: none; }
   }
 </style>
