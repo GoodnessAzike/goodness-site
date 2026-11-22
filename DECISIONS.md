@@ -32,3 +32,9 @@ Every Mission File page has three headings, in this order:
 They are required fields in the content collection, so the build fails if one is missing.
 Scenario 2 (Stripe to S3 with a 3-day lookback) is the first real Mission File, with draft text
 marked "DRAFT, edit me" for her to rewrite.
+
+## 2026-11-21: Projects page opens with a dance epigraph, after Alan Watts
+Above the project cards: "You don't dance in order to finish the dance. You dance to be in the dance."
+credited "After Alan Watts" (a paraphrase of his idea, so not presented as an exact quote).
+Line beneath, marked DRAFT for her to edit: "Shipped or still building, the learning is the point."
+Chosen over "Every project here is shipped" because both current projects are still being built.
