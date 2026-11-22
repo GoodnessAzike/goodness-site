@@ -67,3 +67,10 @@ title cards through her real milestones (Maths teacher and book, Food Technology
 supervisor, telesales, bank desk, Verification Analyst, Team Lead, MSc Distinction), then
 "Data Engineer." and the end title. Plays once when scrolled into view, with Watch again.
 Caption wording is a draft for her to edit. The longer voice film stays planned for later.
+
+## 2026-11-21: More of her photos in the opening film
+Added three of her photos as film beats: her Leeds Trinity graduation speech (MSc, Distinction),
+her BCSWomen Lovelace poster selfie (flipped so the poster reads the right way), and her Teens in AI
+SDGs talk (cropped to show only her, so no teenagers' faces appear on the site). All photos are
+resized and stripped of hidden metadata (the poster selfie had GPS location). The film is now about
+15 seconds. "The Big Picture" presentation photo is held back until she says what it was.

@@ -19,14 +19,16 @@ export const site = {
   storyReel: {
     draft: true,
     beats: [
-      { ms: 3000, photo: '/talk/baby.jpg', alt: 'Me as a little girl', lines: ['It started here.'] },
+      { ms: 3000, photo: '/talk/baby.jpg', ratio: 381 / 498, alt: 'Me as a little girl', lines: ['It started here.'] },
       { ms: 1000, lines: ['Maths teacher.', 'Wrote a book.'] },
       { ms: 1000, lines: ['Food Technology.', 'Distinction.'] },
       { ms: 1000, lines: ['Supervisor. Telesales.', 'A bank desk.'] },
       { ms: 1000, lines: ['Verification Analyst.', 'Team Lead.'] },
-      { ms: 1400, lines: ['MSc Data Science and AI.', 'Distinction.'] },
+      { ms: 2200, photo: '/talk/grad.jpg', ratio: 1400 / 1386, alt: 'Me giving a speech at my Leeds Trinity University graduation', lines: ['MSc Data Science and AI.', 'Distinction.'] },
+      { ms: 2000, photo: '/talk/poster.jpg', ratio: 964 / 1400, alt: 'Me next to my poster, Non-Linear Learning Journeys in Computing Education', lines: ['Presented at', 'BCSWomen Lovelace.'] },
+      { ms: 2000, photo: '/talk/teens.jpg', ratio: 1400 / 1392, alt: 'Me presenting the Sustainable Development Goals at Teens in AI', lines: ['Teens in AI,', 'London Chapter Lead.'] },
       { ms: 1600, lines: ['Data Engineer.'] },
-    ] as { ms: number; photo?: string; alt?: string; lines: string[] }[],
+    ] as { ms: number; photo?: string; ratio?: number; alt?: string; lines: string[] }[],
   },
   // About page life-paths drawing: paths I've crossed, shown as glowing leaves (in time order, no years).
   // Tap a leaf to show its note for 5 seconds. draft: true = wording still to edit (badge shows locally).

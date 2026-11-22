@@ -12,7 +12,7 @@ const story = beats.map((b) => b.lines.join(' ')).join(' ') + ` ${site.name}. ${
 <section class="reel-wrap" aria-label="A ten-second film about me">
   <div class="reel" data-reel data-state="idle" role="img" aria-label={story}>
     {beats.map((b, i) => (
-      <div class:list={['beat', { photo: !!b.photo }]} data-beat={i} data-ms={b.ms} aria-hidden="true">
+      <div class:list={['beat', { photo: !!b.photo }]} data-beat={i} data-ms={b.ms} aria-hidden="true" style={b.ratio ? `--ar:${b.ratio.toFixed(3)}` : undefined}>
         {b.photo && (
           <>
             <img class="ph-bg" src={b.photo} alt="" />
@@ -97,7 +97,7 @@ const story = beats.map((b) => b.lines.join(' ')).join(' ') + ` ${site.name}. ${
     filter: sepia(0.4) blur(18px) brightness(0.45); transform: scale(1.2);
   }
   .print {
-    position: absolute; left: 50%; top: 48%; height: 74%; aspect-ratio: 381 / 498;
+    position: absolute; left: 50%; top: 48%; height: 74%; aspect-ratio: var(--ar, 0.765);
     background: #f1e9d8; padding: 1.6% 1.6% 4.5%;
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
     transform: translate(-50%, -50%) rotate(-2.5deg) scale(1);
@@ -110,7 +110,12 @@ const story = beats.map((b) => b.lines.join(' ')).join(' ') + ` ${site.name}. ${
   }
   /* on wide screens the caption sits beside the print, like a note written next to it */
   @media (min-width: 561px) {
-    .beat.photo .cap { position: absolute; left: 67%; bottom: 24%; padding: 0; text-align: left; transform: rotate(-4deg); }
+    /* just right of the print, whatever its shape */
+    .beat.photo .cap {
+      position: absolute; left: calc(52% + 20.8% * var(--ar, 0.765)); bottom: 24%;
+      max-width: calc(46% - 20.8% * var(--ar, 0.765)); padding: 0; text-align: left; transform: rotate(-4deg);
+    }
+    .beat.photo .l { font-size: clamp(1.125rem, 2.4vw, 1.875rem); }
   }
   /* on tall phone screens the photo simply fills the frame */
   @media (max-width: 560px) {
