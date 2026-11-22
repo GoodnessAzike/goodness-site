@@ -30,21 +30,12 @@ const milestones = [
   { at: [270, -22] as P, title: 'Verification Analyst', sub: 'Aiera', side: -1 },
   { at: [400, 16] as P, title: 'Team Lead', sub: 'Aiera', side: 1 },
 ];
-// Paths I've crossed: grey branches that end in a glowing leaf, in time order before the bank.
+// Paths I have crossed: glowing leaves that sit on the grey branches, spread across the past.
 import { site } from '../data/site';
 import DraftMark from './DraftMark.astro';
-const leafSpots: { origin: number; end: P }[] = [
-  { origin: 12, end: [40, -125] },
-  { origin: 30, end: [75, 112] },
-  { origin: 55, end: [115, -100] },
-  { origin: 90, end: [188, 122] },
-];
-const crossed = site.crossed.slice(0, leafSpots.length).map((c, i) => {
-  const { origin, end } = leafSpots[i];
-  const o: P = [origin, 0];
-  const mid: P = [(origin + end[0]) / 2 + 6, end[1] * 0.55];
-  return { ...c, branch: [o, mid, end] as P[], end };
-});
+// Where each leaf should roughly sit (left to right keeps their order). Each leaf then snaps onto
+// the nearest point of an existing grey branch, so leaves sit inside the branches, spread out.
+const leafTargets: P[] = [[95, -105], [270, 115], [400, -60], [490, 60]];
 // The MSc joins my path as a second line
 const msc: P[] = [[330, -150], [390, -120], [440, -60], [470, -8]];
 
@@ -72,6 +63,49 @@ for (let i = 0; i < 18; i++) {
   }
   closed.push(pts);
 }
+
+// Snap each leaf onto the nearest point of a grey branch
+const sample = (pts: P[]): P[] => {
+  const out: P[] = [];
+  for (let i = 1; i < pts.length; i++) {
+    for (let k = 0; k < 8; k++) {
+      const f = k / 8;
+      out.push([pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * f, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * f]);
+    }
+  }
+  return out;
+};
+// Keep leaves off my own path and clear of the milestone labels (boxes in [t, s] space)
+const avoid: [number, number, number, number][] = [
+  // wide layout: labels sit under or over each dot
+  [60, 200, 20, 80],      // Customer-service desk
+  [205, 335, -85, -10],   // Verification Analyst
+  [345, 455, 10, 90],     // Team Lead
+  [140, 360, -170, -105], // MSc
+  // phone layout: labels sit beside each dot
+  [105, 155, 10, 175],    // Customer-service desk
+  [245, 295, -175, -5],   // Verification Analyst
+  [375, 425, 5, 135],     // Team Lead
+  [305, 355, -175, 0],    // MSc
+  [495, 560, 70, 175],    // TODAY label
+];
+// distance from a point to the MSc line (sampled)
+const mscPts = sample(msc);
+const nearMsc = ([t, s]: P) => mscPts.some(([a, b]) => (a - t) ** 2 + (b - s) ** 2 < 40 ** 2);
+const clear = ([t, s]: P) =>
+  Math.abs(s - onMine(t)) > 45 && t < TODAY - 40 && !nearMsc([t, s]) &&
+  !avoid.some(([t0, t1, s0, s1]) => t >= t0 && t <= t1 && s >= s0 && s <= s1);
+const greyPoints = closed.flatMap(sample).filter(clear);
+// Snap each target, then hand the leaves out left to right so they stay in time order
+const spots = leafTargets.map(([tt, ts]) => {
+  let best = greyPoints[0], bestD = Infinity;
+  for (const p of greyPoints) {
+    const d = (p[0] - tt) ** 2 + (p[1] - ts) ** 2;
+    if (d < bestD) { bestD = d; best = p; }
+  }
+  return best;
+}).sort((a, b) => a[0] - b[0]);
+const crossed = site.crossed.slice(0, spots.length).map((c, i) => ({ ...c, end: spots[i] }));
 
 // Green: paths open to me. Many lines leave TODAY and wander out to spread-out ends.
 // Lines heading to the middle are drawn first, the outer ones last, so the side fills up.
@@ -111,7 +145,6 @@ const layouts = [
   { key: 'wide', viewBox: '0 0 1000 480', map: (p: P): P => [p[0], 240 + p[1]], fs: 15 },
   { key: 'tall', viewBox: '0 0 400 1040', map: (p: P): P => [200 + p[1] * 1.0, 60 + p[0] * 0.98], fs: 14 },
 ];
-const leafBranch = (b: P[]): P[] => [[b[0][0], onMine(b[0][0])], b[1], b[2]];
 const label = "How I got here, drawn as life paths: my path runs from a customer-service desk at one of Nigeria's top banks, to Verification Analyst and Team Lead at Aiera, with an MSc in Data Science and AI at Leeds Trinity joining in, to today as a Data Engineer at Aiera. Along the way, paths I've crossed: maths teacher, Food Technology (HND, Distinction), supervisor at Shandee's Fastfood, and outbound telesales at IrokoTV. Grey lines behind me are paths closed to me. After today, green lines branch out and fill the page: paths open to me.";
 ---
 <section class="paths" aria-labelledby="paths-title">
@@ -142,9 +175,6 @@ const label = "How I got here, drawn as life paths: my path runs from a customer
           <g class="closed-set">
             {closed.map((c, i) => <path class="closed" d={curve(c, L.map)} pathLength="1" style={`--i:${i}`} />)}
           </g>
-
-          <!-- paths I've crossed: grey branches out to each leaf -->
-          {crossed.map((c) => <path class="closed crossed" d={curve(leafBranch(c.branch), L.map)} pathLength="1" />)}
 
           <!-- my path, and the MSc joining it -->
           <path class="mine msc" d={curve(msc, L.map)} pathLength="1" />
