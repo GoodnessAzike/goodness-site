@@ -1,7 +1,7 @@
 ---
 // About page opening film, thriller style (our own, nothing copied): a typewriter line, a ticking
 // seven-segment clock, my photo, a quad split screen, fast cuts, a three-way split, and a title slam.
-// Plays muted when it scrolls into view; "Sound on" adds the original score (src/scripts/reel-score.ts).
+// Plays muted when it scrolls into view; "Sound on" adds a heartbeat (src/scripts/reel-score.ts).
 import { site } from '../data/site';
 import DraftMark from './DraftMark.astro';
 
@@ -112,7 +112,7 @@ const story = [r.opener, r.photo.caption, ...r.quad.map((q) => `${q.title}, ${q.
       let secs = 0;
       paintClock(0);
       clock.classList.add('on');
-      clockTimer = window.setInterval(() => { secs++; paintClock(secs); score.tick(); }, 1000);
+      clockTimer = window.setInterval(() => { secs++; paintClock(secs); }, 1000);
     };
     const stopClock = (freeze: boolean) => {
       window.clearInterval(clockTimer);
@@ -136,22 +136,22 @@ const story = [r.opener, r.photo.caption, ...r.quad.map((q) => `${q.title}, ${q.
       // 1. typewriter line
       show('open');
       const text = typeEl.dataset.type || '';
-      [...text].forEach((_, i) => at(300 + i * 55, () => { typeEl.textContent = text.slice(0, i + 1); if (text[i] !== ' ') score.key(); }));
+      [...text].forEach((_, i) => at(300 + i * 55, () => { typeEl.textContent = text.slice(0, i + 1); }));
       // 2. the photo, and the clock starts
-      at(2400, () => { show('photo'); score.hit(); startClock(); });
+      at(2400, () => { show('photo'); startClock(); });
       // 3. quad split, one box at a time
       at(5200, () => show('quad'));
-      $$<HTMLElement>('.box').forEach((b, i) => at(5200 + i * 700, () => { b.classList.add('in'); score.hit(); }));
+      $$<HTMLElement>('.box').forEach((b, i) => at(5200 + i * 700, () => b.classList.add('in')));
       // 4. fast cuts
       at(8800, () => show('cuts'));
-      $$<HTMLElement>('.cut').forEach((c, i, all) => at(8800 + i * 600, () => { all.forEach((x) => x.classList.remove('in')); c.classList.add('in'); score.hit(); }));
+      $$<HTMLElement>('.cut').forEach((c, i, all) => at(8800 + i * 600, () => { all.forEach((x) => x.classList.remove('in')); c.classList.add('in'); }));
       // 5. three-way split
       at(10600, () => show('split'));
-      $$<HTMLElement>('.panel').forEach((p, i) => at(10600 + i * 700, () => { p.classList.add('in'); score.hit(); }));
+      $$<HTMLElement>('.panel').forEach((p, i) => at(10600 + i * 700, () => p.classList.add('in')));
       // 6. final line, clock freezes
-      at(14200, () => { show('final'); stopClock(true); score.beeps(); });
+      at(14200, () => { show('final'); stopClock(true); });
       // 7. title slam
-      at(15600, () => { show('title'); clock.classList.remove('on'); reel.classList.add('shake'); score.boom(); });
+      at(15600, () => { show('title'); clock.classList.remove('on'); reel.classList.add('shake'); score.titleHit(); });
       at(16300, () => reel.classList.remove('shake'));
       at(17400, () => { reel.dataset.state = 'ended'; againBtn.hidden = false; });
     };

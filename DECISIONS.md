@@ -91,3 +91,8 @@ Original score made live in the browser with Web Audio (no audio files, nothing 
 low hum, a heartbeat that speeds up, a tick each second, hits on every cut, two beeps when the
 clock freezes, and a boom on the title. It autoplays muted (browsers block autoplay sound);
 "Sound on" restarts it with the score. All wording is a draft for her to edit.
+
+## 2026-11-21: Film score is a heartbeat only
+The layered score (hum, ticks, hits, beeps, boom) overlapped too much. The film now uses only a
+heartbeat: slow at first, speeding up as the film builds, and stopping dead the moment the
+GOODNESS title appears, so the title lands in silence.
