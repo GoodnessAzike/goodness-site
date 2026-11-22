@@ -38,3 +38,8 @@ Above the project cards: "You don't dance in order to finish the dance. You danc
 credited "After Alan Watts" (a paraphrase of his idea, so not presented as an exact quote).
 Line beneath, marked DRAFT for her to edit: "Shipped or still building, the learning is the point."
 Chosen over "Every project here is shipped" because both current projects are still being built.
+
+## 2026-11-21: Epigraph made playful; credit reworded
+The epigraph is set in the red-pen handwriting font, and every "dance" gently sways (still for
+reduced motion). Credit changed from "After Alan Watts" to "Inspired by Alan Watts, philosopher",
+because "After" read as if it were part of his name.

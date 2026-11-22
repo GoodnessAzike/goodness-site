@@ -12,8 +12,10 @@ const projects = (await getCollection('projects')).sort((a, b) => a.data.order -
   </header>
 
   <figure class="epigraph">
-    <blockquote><p>You don't dance in order to finish the dance. You dance to be in the dance.</p></blockquote>
-    <figcaption>After Alan Watts</figcaption>
+    <blockquote>
+      <p>You don't <span class="d">dance</span> in order to finish the <span class="d">dance</span>. You <span class="d">dance</span> to be in the <span class="d">dance</span>.</p>
+    </blockquote>
+    <figcaption>Inspired by Alan Watts, philosopher</figcaption>
     <p class="epi-note">Shipped or still building, the learning is the point.<DraftMark /></p>
   </figure>
 
@@ -44,10 +46,27 @@ const projects = (await getCollection('projects')).sort((a, b) => a.data.order -
 
 <style>
   /* opening epigraph, like the line before a film starts */
-  .epigraph { margin: 0 0 clamp(40px, 7vw, 64px); max-width: 46ch; display: grid; gap: 10px; }
+  .epigraph { margin: 0 0 clamp(40px, 7vw, 64px); max-width: 34ch; display: grid; gap: 10px; }
   .epigraph::before { content: ''; width: 48px; height: 2px; background: var(--signal); margin-bottom: 10px; }
   .epigraph blockquote { margin: 0; }
-  .epigraph blockquote p { font-style: italic; font-size: 1.0625rem; line-height: 1.65; color: var(--paper); }
+  .epigraph blockquote p {
+    font-family: var(--font-hand); font-weight: 700;
+    font-size: clamp(1.375rem, 3.4vw, 1.875rem); line-height: 1.45;
+    color: var(--paper);
+    transform: rotate(-1deg); transform-origin: left;
+  }
+  /* every "dance" dances */
+  .d { display: inline-block; color: var(--signal); animation: sway 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+  .d:nth-of-type(2) { animation-delay: -0.4s; }
+  .d:nth-of-type(3) { animation-delay: -0.8s; }
+  .d:nth-of-type(4) { animation-delay: -1.2s; }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-6deg) translateY(0); }
+    25% { transform: rotate(0deg) translateY(-3px); }
+    50% { transform: rotate(6deg) translateY(0); }
+    75% { transform: rotate(0deg) translateY(-3px); }
+  }
+  @media (prefers-reduced-motion: reduce) { .d { animation: none; } }
   .epigraph figcaption { font-size: 0.875rem; color: var(--muted); }
   .epi-note { margin-top: 14px; font-size: 0.9375rem; font-style: italic; color: var(--muted); }
   .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
