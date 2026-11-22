@@ -14,6 +14,20 @@ export const site = {
     'I got here from a customer-service desk at one of Nigeria\'s top banks, through Verification Analyst and Team Lead roles at Aiera, and an MSc in Data Science and AI at Leeds Trinity University (Distinction). That path taught me to trace every data problem back to the person it affects.',
     'The thread through all of it: the best systems, pipelines or classrooms, are designed for the people who were never meant to fit the default mold.',
   ],
+  // About page opening: a 10-second silent "movie" about me. Each beat shows for `ms` milliseconds.
+  // A beat with `photo` shows that photo; otherwise it is a title card. draft: true = wording still to edit.
+  storyReel: {
+    draft: true,
+    beats: [
+      { ms: 3000, photo: '/talk/baby.jpg', alt: 'Me as a little girl', lines: ['It started here.'] },
+      { ms: 1000, lines: ['Maths teacher.', 'Wrote a book.'] },
+      { ms: 1000, lines: ['Food Technology.', 'Distinction.'] },
+      { ms: 1000, lines: ['Supervisor. Telesales.', 'A bank desk.'] },
+      { ms: 1000, lines: ['Verification Analyst.', 'Team Lead.'] },
+      { ms: 1400, lines: ['MSc Data Science and AI.', 'Distinction.'] },
+      { ms: 1600, lines: ['Data Engineer.'] },
+    ] as { ms: number; photo?: string; alt?: string; lines: string[] }[],
+  },
   // About page life-paths drawing: paths I've crossed, shown as glowing leaves (in time order, no years).
   // Tap a leaf to show its note for 5 seconds. draft: true = wording still to edit (badge shows locally).
   crossed: [

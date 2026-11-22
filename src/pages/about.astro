@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Placeholder from '../components/Placeholder.astro';
 import AboutTalk from '../components/AboutTalk.astro';
 import LifePaths from '../components/LifePaths.astro';
+import StoryReel from '../components/StoryReel.astro';
 import Testimonials from '../components/Testimonials.astro';
 import { site } from '../data/site';
 import { themeSongs, favouriteQuote } from '../data/songs';
@@ -16,6 +17,8 @@ const stages = themeSongs
   <header class="page-head">
     <h1>About</h1>
   </header>
+
+  <StoryReel />
 
   <div class="about">
     <section class="bio" aria-label="Bio">

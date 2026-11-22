@@ -59,3 +59,11 @@ Food Technology (HND, Distinction), Supervisor at Shandee's Fastfood, Outbound t
 Tapping a leaf shows a short note that disappears after 5 seconds, so the drawing never gets
 cluttered. The one-sentence notes are drafts for her to edit. The key gains "paths I've crossed
 (tap a leaf)" and moves to the bottom-left on wide screens.
+
+## 2026-11-21: About page opens with a 10-second silent film
+A short visual story at the top of About, no voice needed: letterbox and film grain, her childhood
+photo (as an old tilted print on wide screens, full frame on phones) with "It started here.", quick
+title cards through her real milestones (Maths teacher and book, Food Technology Distinction,
+supervisor, telesales, bank desk, Verification Analyst, Team Lead, MSc Distinction), then
+"Data Engineer." and the end title. Plays once when scrolled into view, with Watch again.
+Caption wording is a draft for her to edit. The longer voice film stays planned for later.
