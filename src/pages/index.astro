@@ -21,10 +21,10 @@ const latest = episodes[0];
 // After a season's final episode, the clock points at the next season's Episode 1
 const seasonDone = latest && site.seasons[latest.data.season]?.episodes === latest.data.episode;
 const nextLabel = !latest
-  ? 'Season 1, Episode 1'
+  ? 'Series 1, Episode 1'
   : seasonDone
-    ? `Season ${latest.data.season + 1}, Episode 1`
-    : `Season ${latest.data.season}, Episode ${latest.data.episode + 1}`;
+    ? `Series ${latest.data.season + 1}, Episode 1`
+    : `Series ${latest.data.season}, Episode ${latest.data.episode + 1}`;
 ---
 <Base>
   <section class="hero">

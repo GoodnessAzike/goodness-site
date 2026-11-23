@@ -27,7 +27,7 @@ const fromEpisode = (await getCollection('episodes')).find((ep) => ep.data.missi
     <h1>{title}</h1>
     <p>{whatThisShows}</p>
     {fromEpisode && (
-      <p class="from">From <a href={`/episodes/#season-${fromEpisode.data.season}`}>Season {fromEpisode.data.season}, Episode {fromEpisode.data.episode}: {fromEpisode.data.title}</a></p>
+      <p class="from">From <a href={`/episodes/#season-${fromEpisode.data.season}`}>Series {fromEpisode.data.season}, Episode {fromEpisode.data.episode}: {fromEpisode.data.title}</a></p>
     )}
   </header>
 

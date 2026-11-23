@@ -124,3 +124,8 @@ Understanding Lambda), set in site.ts as `currently` and updated each season. CV
 hidden until her real CV is in (`cvReady` in site.ts); then it shows as one small "CV (PDF)" link
 next to LinkedIn and email, not a big button. The weekly episodes, drawings and countdown do the
 inviting.
+
+## 2026-11-23: "Season" is now "Series" (the UK word)
+In the UK a run of a show is a series, so the site says "Series 1, Episode 6" and the menu and
+page heading say "Series". The page address stays /episodes/ so shared links keep working; the
+code still calls the field `season`.

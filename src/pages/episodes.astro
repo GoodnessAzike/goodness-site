@@ -32,19 +32,19 @@ const seasons = seasonNumbers.map((n) => {
 // Open on the newest season that has episodes
 const current = seasons.find((s) => !s.soon)?.n ?? seasons[0]?.n;
 const label = (s: (typeof seasons)[number]) =>
-  `Season ${s.n}${s.title ? `: ${s.title}` : ''}`;
+  `Series ${s.n}${s.title ? `: ${s.title}` : ''}`;
 const newestId = episodes[0]?.id;
 const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
-<Base title="Episodes" description="A weekly learning log, newest first.">
+<Base title="Series" description="My weekly series, one episode at a time, newest first.">
   <header class="page-head">
-    <h1>Episodes</h1>
+    <h1>Series</h1>
     <p>A weekly log of what I am learning, newest first. Each one ends with what I am learning next.</p>
   </header>
 
   {seasons.length > 0 && (
     <div class="picker">
-      <label for="season-pick" class="visually-hidden">Choose a season</label>
+      <label for="season-pick" class="visually-hidden">Choose a series</label>
       <select id="season-pick" data-season-pick>
         {seasons.map((s) => (
           <option value={s.n} selected={s.n === current}>
@@ -82,7 +82,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
           )}
           {season.latest && (
             <p class="previously">
-              <span class="prev-label">Previously on {season.title ?? `Season ${season.n}`}:</span>{' '}
+              <span class="prev-label">Previously on {season.title ?? `Series ${season.n}`}:</span>{' '}
               {season.latest.data.title}.{' '}
               <span class="prev-next">Next time: {season.latest.data.cliffhanger}</span>
             </p>
@@ -93,8 +93,8 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
         <div class="soon">
           <p class="soon-stamp">Coming soon</p>
           <p class="soon-title">{label(season)}</p>
-          <p class="soon-note">Starts after the Season 1 finale.</p>
-          <button type="button" class="button" data-back>Back to Season {seasons.find((x) => !x.soon)?.n}</button>
+          <p class="soon-note">Starts after the Series 1 finale.</p>
+          <button type="button" class="button" data-back>Back to Series {seasons.find((x) => !x.soon)?.n}</button>
         </div>
       ) : (
       <ol class="log" reversed>
@@ -105,7 +105,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
               <details class="ep" open={ep.id === newestId} data-ep>
               <summary>
                 <span class="sum-text">
-                  <span class="code">Season {ep.data.season}, Episode {ep.data.episode}</span>
+                  <span class="code">Series {ep.data.season}, Episode {ep.data.episode}</span>
                   <h3>{ep.data.title}</h3>
                   {ep.data.subtitle && <span class="subtitle">{ep.data.subtitle}</span>}
                   <span class="meta">
@@ -154,7 +154,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
       )}
     </section>
   ))}
-  {episodes.length === 0 && <p>No episodes yet. Add a Markdown file to src/content/episodes/ to start Season 1.</p>}
+  {episodes.length === 0 && <p>No episodes yet. Add a Markdown file to src/content/episodes/ to start Series 1.</p>}
 
   {books.length > 0 && (
     <section class="bookshelf" id="bookshelf" aria-labelledby="bookshelf-title">
