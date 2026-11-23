@@ -103,6 +103,31 @@ export const site = {
   cv: '/cv.pdf',
   cvReady: false,
 
+  // Series 2 trailer, on the Series page (Series 2 "coming soon" card). Every clue is a line
+  // from Series 1 where Lambda turned up. Wording is a draft for me to edit.
+  trailer: {
+    draft: true,
+    series: 2,
+    opener: 'Series 1 was about the files.',
+    turn: 'But something kept moving them.',
+    clues: [
+      { text: 'A Lambda does it here: a nightly API call is small and finishes in seconds.', from: 'Series 1, Episode 1' },
+      { text: 'Lambda carries an execution role.', from: 'Series 1, Episode 2' },
+      { text: 'A Lambda with no VPC.', from: 'Series 1, Episode 3' },
+      { text: 'The pipeline is a Lambda on EventBridge Scheduler.', from: 'Series 1, Episode 4' },
+      { text: '26 October, 22:00, the Lambda writes raw/payments/2026-10-26.json.', from: 'Series 1, Episode 5' },
+      { text: 'Every hour, a schedule wakes up the two Lambdas.', from: 'Series 1, Episode 6' },
+    ],
+    every: 'It was in every episode.',
+    // "which lambda?" questions, shown over a giant λ
+    which: ['The Greek letter?', 'lambda x: x + 1, in Python?', 'The λ from maths class?'],
+    knowIt: 'Is this the lambda you know?',
+    // what to expect
+    expect: ['Code with no server to look after.', 'It wakes up when something calls it.', 'And it has 15 minutes to finish.'],
+    title: 'Understanding Lambda',
+    date: 'Episode 1: Monday 30 November, 9am.',
+  },
+
   // Seasons: a title for the Episodes page, and how many episodes the season has.
   // When the last episode of a season is out, the clock moves on to the next season's Episode 1.
   // To start Season 2, add e.g.  2: { title: 'Understanding Lambda' },  (episodes is optional)

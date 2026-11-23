@@ -1,0 +1,231 @@
+---
+// Series 2 trailer: typed opener, then Series 1 clues cut on a heartbeat, a giant λ asking
+// "which lambda?", what to expect, the title in silence, and the date written by pen.
+// Same frame and sound engine as the About film (src/scripts/reel-score.ts). Script lives in site.ts.
+import { site } from '../data/site';
+import DraftMark from './DraftMark.astro';
+
+const t = site.trailer;
+const script = [
+  t.opener, t.turn,
+  ...t.clues.map((c) => `${c.from}: ${c.text}`),
+  t.every, ...t.which, t.knowIt, ...t.expect,
+  `Series ${t.series}: ${t.title}.`, t.date,
+].join(' ');
+---
+<div class="trailer-wrap">
+  <div class="trailer" data-trailer data-state="idle" role="img" aria-label={`Trailer. ${script}`}>
+    <div class="sc sc-open" data-sc="open" aria-hidden="true"><p class="type" data-type={t.opener}></p></div>
+
+    <!-- giant λ: sits behind the "which lambda?" questions -->
+    <svg class="lam" data-lam viewBox="0 0 100 120" aria-hidden="true">
+      <path pathLength="1" d="M22 14 C34 10 42 18 47 32 L78 108 M54 52 L24 108" />
+    </svg>
+
+    <!-- one card per heartbeat -->
+    <div class="sc sc-cards" data-sc="cards" aria-hidden="true">
+      <p class="card line" data-card>{t.turn}</p>
+      {t.clues.map((c) => (
+        <figure class="card clue" data-card>
+          <blockquote>{c.text.replace(/-/g, '\u2011')}</blockquote>
+          <figcaption>{c.from}</figcaption>
+        </figure>
+      ))}
+      <p class="card line big" data-card>{t.every}</p>
+      {t.which.map((q) => <p class="card which" data-card data-lambda>{q}</p>)}
+      <p class="card which know" data-card data-lambda>{t.knowIt}</p>
+      {t.expect.map((e) => <p class="card line expect" data-card>{e}</p>)}
+    </div>
+
+    <div class="sc sc-title" data-sc="title" aria-hidden="true">
+      <p class="t-series">Series {t.series}</p>
+      <p class="t-name">{t.title}</p>
+      <p class="t-date">{t.date}</p>
+    </div>
+
+    <i class="grain" aria-hidden="true"></i>
+    <i class="bar top" aria-hidden="true"></i><i class="bar bottom" aria-hidden="true"></i>
+
+    <button type="button" class="ctl sound" data-sound aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" /><path class="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /></svg>
+      <span data-sound-label>Sound on</span>
+    </button>
+    <button type="button" class="ctl again" data-again hidden>Watch again</button>
+  </div>
+  {t.draft && <DraftMark />}
+  <p class="visually-hidden">{script}</p>
+</div>
+
+<script>
+  import { createReelScore } from '../scripts/reel-score';
+
+  const el = document.querySelector<HTMLElement>('[data-trailer]');
+  if (el) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const score = createReelScore();
+    const q = <T extends Element>(s: string) => el.querySelector<T>(s)!;
+    const scenes = Object.fromEntries(Array.from(el.querySelectorAll<HTMLElement>('[data-sc]')).map((s) => [s.dataset.sc!, s]));
+    const typeEl = q<HTMLElement>('[data-type]');
+    const lam = q<SVGElement>('[data-lam]');
+    const cards = Array.from(el.querySelectorAll<HTMLElement>('[data-card]'));
+    const soundBtn = q<HTMLButtonElement>('[data-sound]');
+    const soundLabel = q<HTMLElement>('[data-sound-label]');
+    const againBtn = q<HTMLButtonElement>('[data-again]');
+
+    // One shared plan: cards and heartbeat land together
+    const TYPE_START = 300, TYPE_STEP = 55;
+    const text = typeEl.dataset.type || '';
+    const FIRST = TYPE_START + text.length * TYPE_STEP + 700;
+    const beats: number[] = [];
+    for (let at = FIRST; beats.length < cards.length + 1; ) {
+      beats.push(Math.round(at));
+      at += 1150 - Math.min(1, (at - FIRST) / 13000) * 500; // speeds up as it builds
+    }
+    const TITLE_AT = beats[cards.length] + 400; // a held breath, then the title in silence
+    const WRITE_AT = TITLE_AT + 1200, WRITE_MS = 1700;
+
+    let timers: number[] = [];
+    let soundOn = false;
+    const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
+    const show = (name: string | null) => Object.entries(scenes).forEach(([k, s]) => s.classList.toggle('on', k === name));
+
+    const reset = () => {
+      timers.forEach(clearTimeout); timers = [];
+      score.stop(false);
+      cards.forEach((c) => c.classList.remove('in'));
+      lam.classList.remove('on');
+      scenes.title.classList.remove('writing');
+      typeEl.textContent = '';
+      againBtn.hidden = true;
+    };
+
+    const play = () => {
+      reset();
+      el.dataset.state = 'playing';
+      const keys = [...text].map((ch, i) => (ch === ' ' ? -1 : TYPE_START + i * TYPE_STEP)).filter((ms) => ms >= 0);
+      if (soundOn) score.play({ keys, beats: beats.slice(0, cards.length), scribble: [WRITE_AT, WRITE_MS] });
+
+      show('open');
+      [...text].forEach((_, i) => at(TYPE_START + i * TYPE_STEP, () => { typeEl.textContent = text.slice(0, i + 1); }));
+      cards.forEach((c, i) => at(beats[i], () => {
+        if (i === 0) show('cards');
+        cards.forEach((x) => x.classList.toggle('in', x === c));
+        lam.classList.toggle('on', c.hasAttribute('data-lambda'));
+      }));
+      at(beats[cards.length], () => { show(null); lam.classList.remove('on'); }); // black beat, heartbeat stops
+      at(TITLE_AT, () => show('title'));
+      at(WRITE_AT, () => scenes.title.classList.add('writing'));
+      at(WRITE_AT + WRITE_MS + 800, () => { el.dataset.state = 'ended'; againBtn.hidden = false; });
+    };
+
+    soundBtn.addEventListener('click', () => {
+      soundOn = !soundOn;
+      soundBtn.setAttribute('aria-pressed', String(soundOn));
+      soundLabel.textContent = soundOn ? 'Sound off' : 'Sound on';
+      if (soundOn) play(); else score.stop();
+    });
+    againBtn.addEventListener('click', play);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) score.stop(); });
+
+    if (reduce) {
+      show('title');
+      scenes.title.classList.add('writing');
+      el.dataset.state = 'ended';
+      againBtn.hidden = false; againBtn.textContent = 'Play';
+    } else {
+      // Plays (muted) the first time it is on screen, e.g. when Series 2 is picked
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) { io.disconnect(); play(); }
+      }, { threshold: 0.5 });
+      io.observe(el);
+    }
+  }
+</script>
+
+<style>
+  .trailer-wrap { display: grid; gap: 10px; justify-items: start; width: 100%; }
+  .trailer {
+    position: relative; width: 100%; aspect-ratio: 16 / 9;
+    background: #050505; overflow: hidden; color: #fff; border: 1px solid var(--line);
+    --amber: #f2b33d;
+  }
+  @media (max-width: 560px) { .trailer { aspect-ratio: 4 / 5; } }
+
+  .sc { position: absolute; inset: 9% 0; opacity: 0; transition: opacity 0.12s linear; z-index: 2; }
+  .sc.on { opacity: 1; }
+  @media (max-width: 560px) { .sc { inset: 10% 0; } }
+
+  .sc-open { display: grid; place-items: center; }
+  .type { font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: var(--amber); font-size: clamp(1rem, 2.6vw, 1.5rem); letter-spacing: 0.06em; min-height: 1.4em; }
+  .type::after { content: '▌'; animation: caret 0.8s steps(1) infinite; margin-left: 2px; }
+  @keyframes caret { 50% { opacity: 0; } }
+
+  /* the giant λ */
+  .lam {
+    position: absolute; z-index: 1; left: 50%; top: 50%; height: 78%;
+    transform: translate(-50%, -50%); opacity: 0; transition: opacity 0.2s;
+  }
+  .lam path { fill: none; stroke: var(--amber); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0.32; }
+  .lam.on { opacity: 1; }
+  .lam.on path { stroke-dashoffset: 0; transition: stroke-dashoffset 1.4s cubic-bezier(0.6, 0, 0.3, 1); }
+
+  /* cards: one at a time */
+  .sc-cards { display: grid; place-items: center; padding: 0 clamp(16px, 7vw, 72px); }
+  .card { grid-area: 1 / 1; margin: 0; opacity: 0; text-align: center; max-width: 28ch; }
+  .card.in { opacity: 1; animation: slam 0.25s ease-out; }
+  @keyframes slam { from { transform: scale(1.15); } to { transform: none; } }
+  .line { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.75rem, 5.5vw, 3.75rem); line-height: 1; }
+  .line.big { color: var(--amber); }
+  .expect { font-size: clamp(1.5rem, 4.4vw, 3rem); }
+  .clue { display: grid; gap: 12px; justify-items: center; max-width: 34ch; }
+  .clue blockquote { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: clamp(1.25rem, 3.4vw, 2.25rem); line-height: 1.1; overflow-wrap: anywhere; }
+  .clue blockquote::before { content: '“'; } .clue blockquote::after { content: '”'; }
+  .clue figcaption { font-family: var(--font-hand); font-weight: 700; color: var(--redline); font-size: clamp(1rem, 2vw, 1.375rem); transform: rotate(-2deg); }
+  .which { font-family: var(--font-hand); font-weight: 700; font-size: clamp(1.5rem, 4.4vw, 2.75rem); color: #fff; text-shadow: 0 2px 12px #000; }
+  .which.know { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.75rem, 5.5vw, 3.75rem); color: var(--amber); }
+
+  /* title */
+  .sc-title { display: grid; place-content: center; gap: 8px; text-align: center; padding: 0 16px; }
+  .t-series { font-family: var(--font-display); font-weight: 700; color: var(--amber); font-size: clamp(1.125rem, 2.6vw, 1.625rem); letter-spacing: 0.08em; }
+  .t-name { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.5rem, 9vw, 6rem); line-height: 0.9; text-transform: uppercase; letter-spacing: 0.02em; }
+  .sc-title.on .t-name { animation: title-in 0.5s cubic-bezier(0.2, 1.2, 0.4, 1) both; }
+  @keyframes title-in { from { transform: scale(1.5); opacity: 0; filter: blur(6px); } to { transform: none; opacity: 1; filter: none; } }
+  .t-date { font-family: var(--font-hand); font-weight: 700; color: var(--redline); font-size: clamp(1.125rem, 2.8vw, 1.75rem); margin-top: 8px; clip-path: inset(0 100% 0 0); }
+  .sc-title.writing .t-date { clip-path: inset(0 0 0 0); transition: clip-path 1.7s linear; }
+
+  /* grain + letterbox */
+  .grain {
+    position: absolute; inset: -50%; z-index: 4; pointer-events: none; opacity: 0.16;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.9'/></svg>");
+    animation: grain 0.5s steps(4) infinite;
+  }
+  @keyframes grain { 25% { transform: translate(-4%, 3%); } 50% { transform: translate(3%, -5%); } 75% { transform: translate(-2%, 4%); } }
+  .bar { position: absolute; left: 0; right: 0; height: 9%; background: #000; z-index: 5; }
+  .bar.top { top: 0; } .bar.bottom { bottom: 0; }
+  @media (max-width: 560px) { .bar { height: 10%; } }
+
+  /* buttons sit in the letterbox bars */
+  .ctl {
+    position: absolute; z-index: 7; min-height: 32px; padding: 4px 12px;
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1.5px solid rgba(255, 255, 255, 0.6); background: rgba(0, 0, 0, 0.55); color: #fff;
+    font: inherit; font-size: 0.875rem; font-weight: 700; cursor: pointer;
+  }
+  .ctl:hover { background: #fff; color: #000; }
+  .ctl:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  .ctl[hidden] { display: none; }
+  .sound { right: 10px; top: calc(4.5% - 16px); }
+  .sound svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .sound .waves { opacity: 0.3; }
+  .sound[aria-pressed='true'] { border-color: var(--amber); color: var(--amber); }
+  .sound[aria-pressed='true'] .waves { opacity: 1; }
+  .again { right: 10px; bottom: calc(4.5% - 16px); }
+  @media (max-width: 560px) { .sound span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grain, .type::after { animation: none; }
+    .sc, .lam, .lam.on path { transition: none; }
+    .card.in, .sc-title.on .t-name { animation: none; }
+    .t-date { clip-path: none; }
+  }
+</style>

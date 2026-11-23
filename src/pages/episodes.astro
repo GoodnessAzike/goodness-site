@@ -1,6 +1,7 @@
 ---
 import { getCollection, getEntry, render } from 'astro:content';
 import Placeholder from '../components/Placeholder.astro';
+import Trailer from '../components/Trailer.astro';
 import Base from '../layouts/Base.astro';
 import { site } from '../data/site';
 
@@ -93,7 +94,8 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
         <div class="soon">
           <p class="soon-stamp">Coming soon</p>
           <p class="soon-title">{label(season)}</p>
-          <p class="soon-note">Starts after the Series 1 finale.</p>
+          <p class="soon-note">{site.trailer.series === season.n ? site.trailer.date : 'Starts after the Series 1 finale.'}</p>
+          {site.trailer.series === season.n && <Trailer />}
           <button type="button" class="button" data-back>Back to Series {seasons.find((x) => !x.soon)?.n}</button>
         </div>
       ) : (

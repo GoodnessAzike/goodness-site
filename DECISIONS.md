@@ -129,3 +129,11 @@ inviting.
 In the UK a run of a show is a series, so the site says "Series 1, Episode 6" and the menu and
 page heading say "Series". The page address stays /episodes/ so shared links keep working; the
 code still calls the field `season`.
+
+## 2026-11-23: Series 2 trailer
+Before Series 2 (Understanding Lambda) starts, the Series page shows a 20-second trailer on the
+Series 2 card, in the same frame and sound as the About film. Lambda turned up in all six Series 1
+episodes without being explained, so the trailer replays one line from each (her exact words),
+then "It was in every episode.", then a giant λ asks which lambda it is (the Greek letter? Python?
+maths class?), "Is this the lambda you know?", three lines on what to expect, the title in
+silence, and the date written by pen. Script lives in site.ts under `trailer`, marked draft.
