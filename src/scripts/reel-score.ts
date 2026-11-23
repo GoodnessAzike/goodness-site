@@ -70,14 +70,26 @@ export function createReelScore() {
   };
 
   return {
-    // Schedule the whole film's sound from now, following the shared plan
-    play(plan: ScorePlan) {
+    // Schedule the film's sound, following the shared plan. `fromMs` joins part-way through
+    // (the film has already been playing that long), skipping what has already passed.
+    play(plan: ScorePlan, fromMs = 0) {
       this.stop(false);
       const c = ensure();
-      const base = c.currentTime + 0.05;
-      plan.keys.forEach((ms) => key(base + ms / 1000));
-      plan.beats.forEach((ms) => heartbeat(base + ms / 1000));
-      scribble(base + plan.scribble[0] / 1000, plan.scribble[1] / 1000);
+      const base = c.currentTime + 0.05 - fromMs / 1000;
+      const now = c.currentTime + 0.02;
+      plan.keys.forEach((ms) => { const t = base + ms / 1000; if (t >= now) key(t); });
+      plan.beats.forEach((ms) => { const t = base + ms / 1000; if (t >= now) heartbeat(t); });
+      const [sAt, sDur] = plan.scribble;
+      const sStart = base + sAt / 1000, sEnd = sStart + sDur / 1000;
+      if (sEnd > now) scribble(Math.max(sStart, now), sEnd - Math.max(sStart, now));
+    },
+    // Ask the browser for sound without a tap. True if it allowed it (e.g. a returning visitor).
+    async tryAutoplay() {
+      try {
+        const c = ensure();
+        await Promise.race([c.resume(), new Promise((r) => setTimeout(r, 300))]);
+        return c.state === 'running';
+      } catch { return false; }
     },
     // Stop everything that is still scheduled
     stop(release = true) {

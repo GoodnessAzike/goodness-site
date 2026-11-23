@@ -142,3 +142,10 @@ silence, and the date written by pen. Script lives in site.ts under `trailer`, m
 The Series 2 trailer now sits at the top of the Series page, above the series dropdown, so every
 visitor sees it without picking Series 2. It stays there until Series 2 has its first episode.
 Not on the Home page (her choice).
+
+## 2026-11-23: Trailer plays with sound whenever the browser allows it
+Browsers block sound until the visitor taps or clicks. The trailer now asks for sound straight
+away (some browsers allow it, e.g. for returning visitors). If it is blocked, the sound button
+glows "Tap for sound", and the first tap, click or key press anywhere on the page switches the
+sound on, joining in time with where the trailer has reached (no restart). "Sound off" is
+respected: once a visitor turns it off, it stays off.

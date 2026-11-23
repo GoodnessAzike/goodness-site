@@ -86,6 +86,9 @@ const script = [
 
     let timers: number[] = [];
     let soundOn = false;
+    let userMuted = false; // the visitor pressed "Sound off": never switch it back on for them
+    let startedAt = 0;
+    let plan = { keys: [] as number[], beats: [] as number[], scribble: [0, 0] as [number, number] };
     const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
     const show = (name: string | null) => Object.entries(scenes).forEach(([k, s]) => s.classList.toggle('on', k === name));
 
@@ -103,7 +106,9 @@ const script = [
       reset();
       el.dataset.state = 'playing';
       const keys = [...text].map((ch, i) => (ch === ' ' ? -1 : TYPE_START + i * TYPE_STEP)).filter((ms) => ms >= 0);
-      if (soundOn) score.play({ keys, beats: beats.slice(0, cards.length), scribble: [WRITE_AT, WRITE_MS] });
+      plan = { keys, beats: beats.slice(0, cards.length), scribble: [WRITE_AT, WRITE_MS] };
+      startedAt = performance.now();
+      if (soundOn) score.play(plan);
 
       show('open');
       [...text].forEach((_, i) => at(TYPE_START + i * TYPE_STEP, () => { typeEl.textContent = text.slice(0, i + 1); }));
@@ -118,12 +123,32 @@ const script = [
       at(WRITE_AT + WRITE_MS + 800, () => { el.dataset.state = 'ended'; againBtn.hidden = false; });
     };
 
-    soundBtn.addEventListener('click', () => {
-      soundOn = !soundOn;
+    const paintSound = () => {
       soundBtn.setAttribute('aria-pressed', String(soundOn));
-      soundLabel.textContent = soundOn ? 'Sound off' : 'Sound on';
-      if (soundOn) play(); else score.stop();
+      soundBtn.classList.toggle('nudge', !soundOn && !userMuted);
+      soundLabel.textContent = soundOn ? 'Sound off' : userMuted ? 'Sound on' : 'Tap for sound';
+    };
+    // Sound comes in at the point the trailer has reached, in time with the pictures
+    const soundIn = () => {
+      soundOn = true;
+      if (el.dataset.state === 'playing') score.play(plan, performance.now() - startedAt);
+      paintSound();
+    };
+    soundBtn.addEventListener('click', () => {
+      if (soundOn) { soundOn = false; userMuted = true; score.stop(); paintSound(); return; }
+      userMuted = false;
+      if (el.dataset.state === 'playing') soundIn(); else { soundOn = true; paintSound(); play(); }
     });
+    // Browsers only allow sound after the visitor taps or clicks something. The first tap or
+    // key press anywhere on the page switches the trailer's sound on.
+    const firstTouch = (e: Event) => {
+      if (soundBtn.contains(e.target as Node)) return; // the button handles itself
+      document.removeEventListener('pointerdown', firstTouch, true);
+      document.removeEventListener('keydown', firstTouch, true);
+      if (!soundOn && !userMuted) soundIn();
+    };
+    document.addEventListener('pointerdown', firstTouch, true);
+    document.addEventListener('keydown', firstTouch, true);
     againBtn.addEventListener('click', play);
     document.addEventListener('visibilitychange', () => { if (document.hidden) score.stop(); });
 
@@ -134,8 +159,13 @@ const script = [
       againBtn.hidden = false; againBtn.textContent = 'Play';
     } else {
       // Plays (muted) the first time it is on screen, e.g. when Series 2 is picked
-      const io = new IntersectionObserver((entries) => {
-        if (entries.some((e) => e.isIntersecting)) { io.disconnect(); play(); }
+      const io = new IntersectionObserver(async (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        // Try sound straight away; some browsers allow it for returning visitors
+        if (!userMuted && await score.tryAutoplay()) soundOn = true;
+        paintSound();
+        play();
       }, { threshold: 0.5 });
       io.observe(el);
     }
@@ -219,11 +249,14 @@ const script = [
   .sound .waves { opacity: 0.3; }
   .sound[aria-pressed='true'] { border-color: var(--amber); color: var(--amber); }
   .sound[aria-pressed='true'] .waves { opacity: 1; }
+  /* sound blocked by the browser: the button glows until the visitor taps */
+  .sound.nudge { border-color: var(--amber); color: var(--amber); animation: nudge 1.6s ease-in-out infinite; }
+  @keyframes nudge { 50% { box-shadow: 0 0 0 6px rgba(242, 179, 61, 0.25); } }
   .again { right: 10px; bottom: calc(4.5% - 16px); }
   @media (max-width: 560px) { .sound span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .grain, .type::after { animation: none; }
+    .grain, .type::after, .sound.nudge { animation: none; }
     .sc, .lam, .lam.on path { transition: none; }
     .card.in, .sc-title.on .t-name { animation: none; }
     .t-date { clip-path: none; }
