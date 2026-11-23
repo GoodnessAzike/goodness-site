@@ -149,3 +149,8 @@ away (some browsers allow it, e.g. for returning visitors). If it is blocked, th
 glows "Tap for sound", and the first tap, click or key press anywhere on the page switches the
 sound on, joining in time with where the trailer has reached (no restart). "Sound off" is
 respected: once a visitor turns it off, it stays off.
+
+## 2026-11-23: No "Currently" line on About
+Removed "Currently: writing Series 2, Understanding Lambda." from the Say hello box (her choice).
+The box now has the heading, LinkedIn and email. `currently` stays in site.ts, empty; fill it to
+bring the line back.

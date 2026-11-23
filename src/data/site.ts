@@ -8,7 +8,7 @@ export const site = {
   ],
   // "What I am doing now" line in the "Say hello" box on the About page.
   // Shows I am active without asking for anything. Update it each season.
-  currently: 'Currently: writing Series 2, Understanding Lambda.',
+  currently: '',
   // Short bio for the About page. One string per paragraph.
   bio: [
     'I am a Data Engineer at Aiera, a US financial data company, where I build and govern the data infrastructure behind financial intelligence: event-driven pipelines on AWS (Lambda, SQS, Terraform), data quality checks, and a catalog in OpenMetadata.',
