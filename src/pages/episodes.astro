@@ -2,6 +2,8 @@
 import { getCollection, getEntry, render } from 'astro:content';
 import Placeholder from '../components/Placeholder.astro';
 import Trailer from '../components/Trailer.astro';
+import DraftMark from '../components/DraftMark.astro';
+import Scenario2Diagram from '../components/Scenario2Diagram.astro';
 import Base from '../layouts/Base.astro';
 import { site } from '../data/site';
 
@@ -35,6 +37,10 @@ const current = seasons.find((s) => !s.soon)?.n ?? seasons[0]?.n;
 const label = (s: (typeof seasons)[number]) =>
   `Series ${s.n}${s.title ? `: ${s.title}` : ''}`;
 const newestId = episodes[0]?.id;
+// The three opening fields. "DRAFT, edit me" means not written yet:
+// it shows locally with a badge and is hidden on the live site.
+const isDraft = (v: string) => v.trim().replace(/\.$/, '') === 'DRAFT, edit me';
+const show = (v: string) => !isDraft(v) || import.meta.env.DEV;
 const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
 <Base title="Series" description="My weekly series, one episode at a time, newest first.">
@@ -124,6 +130,29 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
                 <svg class="ep-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </summary>
               <div class="ep-body">
+              {show(ep.data.question) && (
+                <p class="question">
+                  <span class="visually-hidden">The question: </span>
+                  {isDraft(ep.data.question) ? <DraftMark /> : ep.data.question}
+                </p>
+              )}
+              {(show(ep.data.started) || show(ep.data.ended)) && (
+                <dl class="journey">
+                  {show(ep.data.started) && (
+                    <div class="leg">
+                      <dt>Where I started</dt>
+                      <dd>{isDraft(ep.data.started) ? <DraftMark /> : ep.data.started}</dd>
+                    </div>
+                  )}
+                  {show(ep.data.ended) && (
+                    <div class="leg">
+                      <dt>Where I ended</dt>
+                      <dd>{isDraft(ep.data.ended) ? <DraftMark /> : ep.data.ended}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
+              {ep.data.diagram === 'scenario-2' && <div class="ep-diagram"><Scenario2Diagram /></div>}
               <div class="notes"><Content /></div>
               {(mission || book) && (
                 <dl class="links">
@@ -142,7 +171,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
                   class="listen"
                   data-listen
                   data-audio={ep.data.audio}
-                  data-say={[ep.data.title, ep.data.subtitle, ep.body, `Next time: ${ep.data.cliffhanger}`].filter(Boolean).join('. ').replace(/\.\./g, '.')}
+                  data-say={[ep.data.title, ep.data.subtitle, ...[ep.data.question, ep.data.started, ep.data.ended].filter((v) => !isDraft(v)), ep.body, `Next time: ${ep.data.cliffhanger}`].filter(Boolean).join('. ').replace(/\.\./g, '.')}
                   aria-pressed="false"
                   hidden
                 >
@@ -442,6 +471,30 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
   .code { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; color: var(--muted); line-height: 1.2; }
   .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; color: var(--muted); font-size: 1rem; }
   .subtitle { color: var(--muted); font-size: 1.0625rem; max-width: var(--measure); }
+  /* the question that starts each episode, then where I started and where I ended */
+  .question {
+    max-width: 24ch;
+    font-family: var(--font-display); font-weight: 800;
+    font-size: clamp(1.625rem, 4vw, 2.25rem); line-height: 1.08;
+    text-wrap: balance;
+    padding-left: 18px; border-left: 6px solid var(--signal);
+  }
+  .journey {
+    margin: 4px 0 6px; width: 100%; max-width: 820px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+    border: 1.5px solid var(--line);
+  }
+  .leg { padding: 14px 18px 16px; display: grid; gap: 6px; align-content: start; }
+  .leg + .leg { border-left: 1.5px solid var(--line); }
+  .leg dt { font-family: var(--font-hand); font-weight: 700; font-size: 1.125rem; color: var(--redline); }
+  .leg + .leg dt { color: var(--signal); }
+  .leg dd { margin: 0; font-size: 1.0625rem; }
+  .leg dd :global(.draft-mark) { margin-left: 0; }
+  @media (max-width: 560px) {
+    .journey { grid-template-columns: 1fr; }
+    .leg + .leg { border-left: 0; border-top: 1.5px solid var(--line); }
+  }
+  .ep-diagram { width: 100%; }
   .notes { max-width: var(--measure); }
   .notes :global(p + p) { margin-top: 0.8em; }
   .cliff {

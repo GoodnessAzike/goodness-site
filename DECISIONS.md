@@ -160,3 +160,15 @@ The DO IT YOURSELF MATHEMATICS note under Outside work now links both books: "Re
 (public/books/do-it-yourself-mathematics-basic-four.pdf, moved from the public folder root) and
 "Read Basic Five and Six". New fifth sticky note in her words: "I love to learn about skating,
 reading books and watching movies." The Maths teacher leaf stays as it is.
+
+## 2026-11-23: Episodes start with one simple question, after Michael Lewis's Moneyball approach
+Every episode now opens with three required fields, in this order:
+1. "The question": one simple question that starts the episode.
+2. "Where I started": the problem.
+3. "Where I ended": what I can do now that I couldn't before.
+Then the body: the diagram and the steps. The build fails if an episode is missing any of the
+three. Not written yet? Write "DRAFT, edit me": it shows locally with a badge and is hidden on
+the live site. The Stripe diagram (Scenario 2) is the sample, shown in Series 1, Episode 5 where
+it came from, with the question pre-filled ("How does a pipeline catch refunds without breaking
+history?") and the other two marked "DRAFT, edit me". The Scenario 2 Mission File stays as it is
+for now, while Mission Files waits on her rethink.

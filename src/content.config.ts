@@ -53,13 +53,27 @@ const books = defineCollection({
 });
 
 // Add a new Episode by adding a .md file to src/content/episodes/
-// The text below the --- lines becomes the episode notes.
+// Every episode starts with three required fields, in this order:
+//   question, started, ended
+// Then the body: the diagram (optional `diagram`) and the steps (the text below the --- lines).
+// Not written yet? Put "DRAFT, edit me". It shows locally with a badge and is hidden on the live site.
+const DRAFT = 'DRAFT, edit me';
+const required = (name: string) => z.string().min(1, `Every Episode needs "${name}" (write "${DRAFT}" if it is not written yet)`);
 const episodes = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/episodes' }),
   schema: z.object({
     season: z.number(),
     episode: z.number(),
     title: z.string(),
+    // 1. "The question": one simple question that starts the episode,
+    //    e.g. How does a pipeline catch refunds without breaking history?
+    question: required('The question'),
+    // 2. "Where I started": the problem
+    started: required('Where I started'),
+    // 3. "Where I ended": what I can do now that I couldn't before
+    ended: required('Where I ended'),
+    // Optional: the diagram at the top of the body (only 'scenario-2' exists so far)
+    diagram: z.enum(['scenario-2']).optional(),
     // Optional line shown under the title, e.g. "Part 1 of 6: ..."
     subtitle: z.string().optional(),
     date: z.coerce.date(),

@@ -29,7 +29,7 @@ site is and who it is for, and DECISIONS.md for why things are the way they are.
 | Shared layout, header, footer | `src/layouts/Base.astro`, `src/components/Header.astro`, `src/components/Footer.astro` |
 | Content collections (schemas) | `src/content.config.ts` |
 | Mission Files | `src/content/missions/*.md`. Required headings: `cause` (What is causing this?), `connected` (How is it all connected?), `ripples` (What ripples?) |
-| Episodes | `src/content/episodes/sNNeNN.md` (season, episode, Medium link, cliffhanger, optional `missionFile` and `book` links) |
+| Episodes | `src/content/episodes/sNNeNN.md`. Required, in this order: `question` (The question), `started` (Where I started), `ended` (Where I ended); "DRAFT, edit me" until written. Then the body: optional `diagram` and the steps. Also season, episode, Medium link, cliffhanger, optional `missionFile` and `book` links |
 | Projects | `src/content/projects/*.md` |
 | Bookshelf | `src/content/books/*.md` (title, author, one-line idea) |
 | Her details, seasons, clock, How I think, Outside work, About film | `src/data/site.ts` |
