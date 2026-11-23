@@ -43,6 +43,13 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
     <p>A weekly log of what I am learning, newest first. Each one ends with what I am learning next.</p>
   </header>
 
+  {/* Trailer for the next series: shows at the top until that series has its first episode */}
+  {seasons.some((x) => x.soon && x.n === site.trailer.series) && (
+    <section class="next-trailer" aria-label={`Trailer for Series ${site.trailer.series}`}>
+      <Trailer />
+    </section>
+  )}
+
   {seasons.length > 0 && (
     <div class="picker">
       <label for="season-pick" class="visually-hidden">Choose a series</label>
@@ -95,7 +102,6 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
           <p class="soon-stamp">Coming soon</p>
           <p class="soon-title">{label(season)}</p>
           <p class="soon-note">{site.trailer.series === season.n ? site.trailer.date : 'Starts after the Series 1 finale.'}</p>
-          {site.trailer.series === season.n && <Trailer />}
           <button type="button" class="button" data-back>Back to Series {seasons.find((x) => !x.soon)?.n}</button>
         </div>
       ) : (
@@ -379,6 +385,7 @@ const fmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', ye
   .all-toggle[hidden] { display: none; }
 
   /* Netflix-style season dropdown */
+  .next-trailer { max-width: 900px; margin: 0 0 clamp(40px, 6vw, 56px); }
   .picker { position: relative; display: inline-block; margin: 0 14px 32px 0; max-width: 100%; vertical-align: top; }
   @media (max-width: 560px) { .picker { display: block; margin: 0 0 12px; } .picker select { width: 100%; font-size: 1.1875rem; } .all-toggle { min-height: 44px; } }
   .picker select {

@@ -137,3 +137,8 @@ episodes without being explained, so the trailer replays one line from each (her
 then "It was in every episode.", then a giant λ asks which lambda it is (the Greek letter? Python?
 maths class?), "Is this the lambda you know?", three lines on what to expect, the title in
 silence, and the date written by pen. Script lives in site.ts under `trailer`, marked draft.
+
+## 2026-11-23: Trailer at the top of the Series page
+The Series 2 trailer now sits at the top of the Series page, above the series dropdown, so every
+visitor sees it without picking Series 2. It stays there until Series 2 has its first episode.
+Not on the Home page (her choice).
