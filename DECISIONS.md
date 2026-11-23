@@ -109,3 +109,9 @@ Season 1 finished with Episode 6 on 23 Nov. Season 2 (Understanding Lambda) Epis
 Monday 30 Nov at 9am UK time. The clock got an optional `startsOn` date in src/data/site.ts so it
 skips the empty Monday slot on 23 Nov and counts straight to 30 Nov. After that it goes back to
 every Monday at 9am.
+
+## 2026-11-23: Visitor numbers stay private
+Visits are counted with Cloudflare Web Analytics (free, no cookies, no banner needed), which she
+sets up in the Cloudflare dashboard. No public visitor counter on the site: early small numbers
+could look bad to recruiters. If Cloudflare gives a code snippet instead of automatic setup, it
+goes in src/layouts/Base.astro.
