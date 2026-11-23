@@ -13,7 +13,7 @@ const stages = themeSongs
   .map((st) => ({ ...st, songs: st.songs.filter((t) => import.meta.env.DEV || t.song) }))
   .filter((st) => st.songs.length > 0);
 ---
-<Base title="About" description={`About ${site.name}, plus contact links and CV.`}>
+<Base title="About" description={`About ${site.name}, plus contact links.`}>
   <header class="page-head">
     <h1>About</h1>
   </header>
@@ -26,9 +26,8 @@ const stages = themeSongs
     </section>
 
     <section class="contact" aria-labelledby="contact-title">
-      <span class="stamp" aria-hidden="true">Open to work</span>
-      <h2 id="contact-title">Get in touch</h2>
-      {site.openTo && <p class="open-to">{site.openTo}</p>}
+      <h2 id="contact-title">Say hello</h2>
+      {site.currently && <p class="currently">{site.currently}</p>}
       <ul>
         <li>
           {site.linkedin
@@ -40,8 +39,9 @@ const stages = themeSongs
             ? <a href={`mailto:${site.email}`}>{site.email}</a>
             : <Placeholder>email address</Placeholder>}
         </li>
+        {site.cvReady && <li><a href={site.cv} download>CV (PDF)</a></li>}
       </ul>
-      <a class="button cv" href={site.cv} download>Download my CV (PDF)</a>
+      {!site.cvReady && <Placeholder>CV: add public/cv.pdf, then set cvReady: true in site.ts</Placeholder>}
     </section>
   </div>
 
@@ -117,20 +117,8 @@ const stages = themeSongs
   .bio { display: grid; gap: 16px; font-size: 1.1875rem; }
 
   .contact { position: relative; border: 1px solid var(--line); background: var(--ink-raised); padding: 24px; display: grid; gap: 16px; justify-items: start; }
-  /* rubber stamp, slapped on slightly crooked */
-  .stamp {
-    position: absolute; top: -18px; right: -10px;
-    padding: 4px 12px 2px;
-    border: 3px double var(--redline);
-    color: var(--redline);
-    font-family: var(--font-display); font-weight: 800; font-size: 1.375rem; letter-spacing: 0.04em;
-    transform: rotate(8deg);
-    opacity: 0.9;
-    background: rgba(10, 26, 47, 0.6);
-    pointer-events: none;
-  }
   .contact h2 { font-size: 1.75rem; font-weight: 700; }
-  .open-to { font-weight: 700; }
+  .currently { font-family: var(--font-hand); font-weight: 700; font-size: 1.25rem; color: var(--redline); }
   .contact ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
   .contact a:not(.button) { overflow-wrap: anywhere; }
 

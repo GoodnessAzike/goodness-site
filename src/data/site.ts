@@ -6,8 +6,9 @@ export const site = {
   intro: [
     'One thing about me: I am in my era of spotting patterns by trial and error, clocking the pattern, and writing it down.',
   ],
-  // Shown in the "Get in touch" box on the About page
-  openTo: 'Open to working as a data engineer with an amazing team.',
+  // "What I am doing now" line in the "Say hello" box on the About page.
+  // Shows I am active without asking for anything. Update it each season.
+  currently: 'Currently: writing Season 2, Understanding Lambda.',
   // Short bio for the About page. One string per paragraph.
   bio: [
     'I am a Data Engineer at Aiera, a US financial data company, where I build and govern the data infrastructure behind financial intelligence: event-driven pipelines on AWS (Lambda, SQS, Terraform), data quality checks, and a catalog in OpenMetadata.',
@@ -97,8 +98,10 @@ export const site = {
   email: 'goodnessazike@gmail.com',
   medium: '', // TODO: your Medium profile link
   github: '', // TODO: your GitHub profile link
-  // Your CV lives at public/cv.pdf. Replace that file with your real CV.
+  // Your CV lives at public/cv.pdf. Replace that file with your real CV,
+  // then set cvReady to true. Until then no CV link shows anywhere.
   cv: '/cv.pdf',
+  cvReady: false,
 
   // Seasons: a title for the Episodes page, and how many episodes the season has.
   // When the last episode of a season is out, the clock moves on to the next season's Episode 1.

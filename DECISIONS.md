@@ -115,3 +115,12 @@ Visits are counted with Cloudflare Web Analytics (free, no cookies, no banner ne
 sets up in the Cloudflare dashboard. No public visitor counter on the site: early small numbers
 could look bad to recruiters. If Cloudflare gives a code snippet instead of automatic setup, it
 goes in src/layouts/Base.astro.
+
+## 2026-11-23: Show the work, don't ask for work
+The site should invite recruiters without saying "hire me". Removed the "Open to work" stamp and
+the "Open to working as a data engineer with an amazing team" line (About box and film end card).
+"Get in touch" is now "Say hello", with a "Currently" line instead (Currently: writing Season 2,
+Understanding Lambda), set in site.ts as `currently` and updated each season. CV buttons are
+hidden until her real CV is in (`cvReady` in site.ts); then it shows as one small "CV (PDF)" link
+next to LinkedIn and email, not a big button. The weekly episodes, drawings and countdown do the
+inviting.
