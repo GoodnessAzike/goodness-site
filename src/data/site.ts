@@ -111,5 +111,6 @@ export const site = {
 
   // The Home page clock counts down to your next episode: every Monday at 9am UK time.
   // weekday: 0 = Sunday, 1 = Monday ... 6 = Saturday. hour: 0-23 in the time zone below.
-  nextEpisode: { weekday: 1, hour: 9, timeZone: 'Europe/London' },
+  // startsOn: the first day the clock may count to (Season 2 starts Monday 30 Nov)
+  nextEpisode: { weekday: 1, hour: 9, timeZone: 'Europe/London', startsOn: '2026-11-30' } as { weekday: number; hour: number; timeZone: string; startsOn?: string },
 };

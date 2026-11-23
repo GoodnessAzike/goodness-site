@@ -103,3 +103,9 @@ the photo, each quad box, each cut, each split panel and the final line all land
 heartbeat (pictures and sound follow one shared timeline). The heartbeat stops on the GOODNESS
 title, which lands in silence; then the tagline is written out by hand, left to right, with a
 pen-scribble sound in time with the writing.
+
+## 2026-11-23: Season 2 clock starts Monday 30 November
+Season 1 finished with Episode 6 on 23 Nov. Season 2 (Understanding Lambda) Episode 1 comes out
+Monday 30 Nov at 9am UK time. The clock got an optional `startsOn` date in src/data/site.ts so it
+skips the empty Monday slot on 23 Nov and counts straight to 30 Nov. After that it goes back to
+every Monday at 9am.

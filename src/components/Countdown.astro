@@ -5,7 +5,7 @@ import { site } from '../data/site';
 
 interface Props { nextLabel: string }
 const { nextLabel } = Astro.props;
-const { weekday, hour, timeZone } = site.nextEpisode;
+const { weekday, hour, timeZone, startsOn } = site.nextEpisode;
 
 const groups = [
   { key: 'd', label: 'days' },
@@ -15,7 +15,7 @@ const groups = [
 ];
 const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
 ---
-<section class="clock" aria-labelledby="clock-title" data-weekday={weekday} data-hour={hour} data-tz={timeZone}>
+<section class="clock" aria-labelledby="clock-title" data-weekday={weekday} data-hour={hour} data-tz={timeZone} data-starts={startsOn ?? ''}>
   <div class="clock-head">
     <h2 id="clock-title">Next episode in</h2>
     <p>{nextLabel}</p>
@@ -72,8 +72,11 @@ const segs = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
     };
 
     // The next <weekday> at <hour>:00 in the clock's time zone, as a real moment
+    // Optional first day (YYYY-MM-DD, e.g. a new season): never count to a slot before it
+    const [sy, sm, sd] = (clock.dataset.starts || '').split('-').map(Number);
+    const starts = sy ? Date.UTC(sy, sm - 1, sd) : 0;
     const nextTarget = (now: Date) => {
-      const wall = new Date(now.getTime() + offset(now)); // its UTC fields read as local wall time
+      const wall = new Date(Math.max(now.getTime() + offset(now), starts - 1)); // its UTC fields read as local wall time
       let add = (weekday - wall.getUTCDay() + 7) % 7;
       const at = (days: number) => Date.UTC(wall.getUTCFullYear(), wall.getUTCMonth(), wall.getUTCDate() + days, hour);
       if (add === 0 && at(0) <= wall.getTime()) add = 7;
