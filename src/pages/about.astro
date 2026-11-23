@@ -57,7 +57,8 @@ const stages = themeSongs
       <ul>
         {site.outsideWork.map((item) => typeof item === 'string'
           ? <li>{item}</li>
-          : <li>{item.text}{item.link && <a class="note-link" href={item.link} target="_blank" rel="noopener">{item.linkText ?? 'See more'}</a>}</li>)}
+          : <li>{item.text}{[...(item.link ? [{ link: item.link, linkText: item.linkText }] : []), ...(item.links ?? [])].map((l) =>
+              <a class="note-link" href={l.link} target="_blank" rel="noopener">{l.linkText ?? 'See more'}</a>)}</li>)}
       </ul>
       {site.aim && <p class="aim">{site.aim}</p>}
     </section>
@@ -140,6 +141,8 @@ const stages = themeSongs
   .outside li:nth-child(2) { transform: rotate(1.2deg); background: #ffe3e0; }
   .outside li:nth-child(3) { transform: rotate(-0.6deg); background: #e3f1ff; }
   .outside li:nth-child(4) { transform: rotate(1.8deg); background: #e6f4d7; }
+  .outside li:nth-child(5) { transform: rotate(-1.1deg); background: #efe4fb; }
+  .note-link + .note-link { margin-top: 4px; }
   .note-link {
     display: block; margin-top: 10px;
     color: #1f2328; font-family: var(--font-hand); font-weight: 700; font-size: 1.0625rem;

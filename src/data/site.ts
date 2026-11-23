@@ -53,12 +53,15 @@ export const site = {
     },
   },
   // About page "Outside work" section. One line each.
-  // A line can also be { text: '...', link: 'https://...', linkText: '...' } to add a link under it.
+  // A line can also be { text: '...', link: 'https://...', linkText: '...' } to add a link under it,
+  // or { text: '...', links: [{ link, linkText }, ...] } for more than one.
   outsideWork: [
     {
       text: 'Wrote DO IT YOURSELF MATHEMATICS, a maths series for primary school children (Basic Four, and Basic Five and Six).',
-      link: '/books/do-it-yourself-mathematics.pdf',
-      linkText: 'Read Basic Five and Six',
+      links: [
+        { link: '/books/do-it-yourself-mathematics-basic-four.pdf', linkText: 'Read Basic Four' },
+        { link: '/books/do-it-yourself-mathematics.pdf', linkText: 'Read Basic Five and Six' },
+      ],
     },
     {
       text: 'London Chapter Lead for Teens in AI, where I have run hackathons and mentored young technologists.',
@@ -75,6 +78,7 @@ export const site = {
       link: 'https://www.linkedin.com/feed/update/urn:li:activity:7449502577794170880/',
       linkText: 'See the post',
     },
+    'I love to learn about skating, reading books and watching movies.',
   ],
   // Shown under the Outside work list
   aim: 'My larger aim is an AI learning tool with a human in the loop, built for neurodivergent and non-linear learners.',

@@ -154,3 +154,9 @@ respected: once a visitor turns it off, it stays off.
 Removed "Currently: writing Series 2, Understanding Lambda." from the Say hello box (her choice).
 The box now has the heading, LinkedIn and email. `currently` stays in site.ts, empty; fill it to
 bring the line back.
+
+## 2026-11-23: Both maths books linked, and an interests note
+The DO IT YOURSELF MATHEMATICS note under Outside work now links both books: "Read Basic Four"
+(public/books/do-it-yourself-mathematics-basic-four.pdf, moved from the public folder root) and
+"Read Basic Five and Six". New fifth sticky note in her words: "I love to learn about skating,
+reading books and watching movies." The Maths teacher leaf stays as it is.
